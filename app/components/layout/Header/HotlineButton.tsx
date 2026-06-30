@@ -4,11 +4,23 @@ import { Phone } from "lucide-react";
 export default function HotlineButton() {
   return (
     <Link
-      href="tel:19001234"
-      className="flex h-11 w-11 items-center justify-center bg-red-600 text-white transition-colors hover:bg-red-700"
-      aria-label="Gọi hotline"
+      href="tel:0982561204"
+      className="
+        flex items-center gap-2
+        rounded-full
+        bg-yellow-400
+        px-4 py-2
+        text-sm
+        font-semibold
+        text-black
+        transition-all
+        duration-200
+        hover:scale-105
+        hover:bg-yellow-300
+      "
     >
-      <Phone size={18} strokeWidth={2.2} />
+      <Phone size={16} />
+      <span>0982561204</span>
     </Link>
   );
 }

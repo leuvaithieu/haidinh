@@ -5,36 +5,29 @@ import { useState } from "react";
 import Logo from "./logo";
 import HeaderActions from "./HeaderActions";
 import MobileMenu from "./MobileMenu";
-import Container from "../Containers";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
 
-  const handleToggleMenu = () => {
-    setOpen((prev) => !prev);
-  };
-
-  const handleCloseMenu = () => {
-    setOpen(false);
-  };
-
   return (
     <>
-  <header className="fixed top-0 left-0 z-50 w-full border-b border-white/10 bg-black/70 backdrop-blur-xl shadow-lg">
-    <Container className="flex h-[68px] items-center justify-between">
-      <Logo />
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex h-[72px] items-center justify-between px-4">
 
-      <HeaderActions
-        open={open}
-        onMenuClick={handleToggleMenu}
+          <Logo />
+
+          <HeaderActions
+            open={open}
+            onToggle={() => setOpen(!open)}
+          />
+
+        </div>
+      </header>
+
+      <MobileMenu
+          open={open}
+          onClose={() => setOpen(false)}
       />
-    </Container>
-  </header>
-
-  <MobileMenu
-    open={open}
-    onClose={handleCloseMenu}
-  />
-</>
+    </>
   );
 }

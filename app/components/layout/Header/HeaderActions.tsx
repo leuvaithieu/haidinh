@@ -2,19 +2,18 @@ import HotlineButton from "./HotlineButton";
 import MenuButton from "./MenuButton";
 
 interface HeaderActionsProps {
-  onMenuClick: () => void;
+  open: boolean;
+  onToggle: () => void;
 }
 
 export default function HeaderActions({
-  onMenuClick,
+  open,
+  onToggle,
 }: HeaderActionsProps) {
   return (
-    <div className="overflow-hidden rounded-full border border-white/10 bg-zinc-900 shadow-lg">
-      <div className="flex divide-x divide-white/10">
-        <HotlineButton />
-
-        <MenuButton onClick={onMenuClick} />
-      </div>
+    <div className="flex items-center gap-3">
+      <HotlineButton />
+      <MenuButton open={open} onClick={onToggle} />
     </div>
   );
 }

@@ -26,16 +26,25 @@ export default function MobileMenu({
       {/* Drawer */}
       <aside
         className={`
-          fixed top-0 right-0 z-50 h-screen w-[85%] max-w-sm
+          fixed top-0 left-0 z-50 h-screen w-[85%] max-w-sm
           bg-white shadow-2xl
           transition-transform duration-300
-          ${open ? "translate-x-0" : "translate-x-full"}
+          ${open ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        <div className="flex h-[72px] items-center justify-end border-b px-4">
-          <button onClick={onClose}>
+        <div className="flex h-[72px] items-center justify-between border-b px-4">
+          <div className="leading-none">
+            <h1 className="text-xl font-black tracking-wide text-red-600">
+              HẢI ĐỊNH
+            </h1>
+
+            <p className="text-[11px] text-neutral-500">
+              Chất lượng tạo niềm tin
+            </p>
+          </div>
+          {/* <button onClick={onClose}>
             <X size={26} />
-          </button>
+          </button> */}
         </div>
 
         <nav className="flex flex-col px-5 py-6">

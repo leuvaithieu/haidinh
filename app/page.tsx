@@ -1,9 +1,10 @@
 import Hero from  "@/app/components/sections/Hero"
+import QuickBooking from "@/app/components/sections/QuickBooking";
 export default function HomePage(){
   return(
     <main>
       <Hero/>
-      <h1>Hải Định Treval</h1>
+      <QuickBooking/>
     </main>
   )
 }

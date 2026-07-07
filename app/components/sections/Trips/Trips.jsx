@@ -1,4 +1,4 @@
-import Container from "@/app/components/layout/Container";
+import Container from "@/app/components/layout/Containers";
 import TripCard from "./TripCard";
 
 export default function Trips() {
@@ -20,6 +20,9 @@ export default function Trips() {
         </div>
 
         <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4">
+          <TripCard />
+          <TripCard />
+          <TripCard />
           <TripCard />
           <TripCard />
           <TripCard />

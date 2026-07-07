@@ -26,28 +26,30 @@ export default function TripCard() {
 
       {/* Content */}
       <div className="p-5">
-        <h3 className="text-2xl font-bold text-gray-900">
-          Thanh Hóa
-        </h3>
+        <div className="mt-5 flex items-center justify-center gap-3">
+          <h3 className="text-xl font-bold text-gray-900">
+              Thanh Hóa
+          </h3>
 
-        <p className="my-2 text-primary text-xl font-semibold">
-          ⇄
-        </p>
+          <span className="text-primary text-lg">⇄</span>
 
-        <h3 className="text-2xl font-bold text-gray-900">
-          Bình Dương
-        </h3>
+          <h3 className="text-xl font-bold text-gray-900">
+              Bình Dương
+          </h3>
+        </div>
 
         <p className="mt-4 text-sm leading-6 text-gray-500">
           Đón trả nhiều điểm • Khởi hành mỗi ngày
         </p>
 
-        <Link
-          href="/tuyen/thanh-hoa-binh-duong"
-          className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary"
-        >
-          Xem lịch trình →
-        </Link>
+        <div className="mt-6 flex justify-end">
+          <Link
+              href="/tuyen/thanh-hoa-binh-duong"
+              className="text-sm font-semibold text-primary"
+          >
+              Xem lịch trình →
+          </Link>
+        </div>
       </div>
     </article>
   );

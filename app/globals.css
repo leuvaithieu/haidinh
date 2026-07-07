@@ -17,3 +17,28 @@
   --gray-500: #777777;
   --gray-700: #444444;
 }
+.why-choose-swiper {
+  width: 100%;
+  max-width: 520px;
+}
+
+.why-choose-swiper .swiper-slide {
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.why-choose-swiper .swiper-pagination {
+  margin-top: 24px;
+  position: static;
+}
+
+.why-choose-swiper .swiper-pagination-bullet {
+  width: 8px;
+  height: 8px;
+  opacity: .3;
+}
+
+.why-choose-swiper .swiper-pagination-bullet-active {
+  opacity: 1;
+  background: var(--color-primary);
+}

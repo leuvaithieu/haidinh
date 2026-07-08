@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "app/components/sections/News/NewsCard.jsx", "app/components/sections/QuickBooking/BookingField.jsx", "app/components/sections/QuickBooking/BookingForm.jsx", "app/components/sections/News/NewsSlider.jsx", "app/components/sections/News/News.jsx"  ],
   "exclude": ["node_modules"]
 }

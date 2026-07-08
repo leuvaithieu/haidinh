@@ -1,4 +1,5 @@
 import Header from "@/app/components/layout/Header";
+import Footer from "@/app/components/layout/Footer";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import "./globals.css";
@@ -17,7 +18,7 @@ export default function RootLayout({
       <body>
         <Header />
         {children}
-
+        <Footer/>
       </body>
     </html>
   );

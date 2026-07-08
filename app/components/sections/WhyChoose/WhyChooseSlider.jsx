@@ -3,7 +3,7 @@
 import Image from "next/image";
 
 import { Swiper, SwiperSlide } from "swiper/react";
-import { EffectCards, Autoplay, Pagination } from "swiper/modules";
+import { EffectCards, Pagination, Autoplay } from "swiper/modules";
 
 import { images } from "./data";
 
@@ -17,26 +17,24 @@ export default function WhyChooseSlider() {
       effect="cards"
       grabCursor
       loop
-      modules={[EffectCards, Pagination, Autoplay]}
       pagination={{
-        clickable: true,
+        clickable: false,
       }}
       autoplay={{
         delay: 3500,
         disableOnInteraction: false,
       }}
+      modules={[EffectCards, Pagination, Autoplay]}
       className="why-choose-swiper"
     >
       {images.map((item) => (
         <SwiperSlide key={item.id}>
-          <div className="relative aspect-[4/5] overflow-hidden rounded-[28px]">
-            <Image
-              src={item.image}
-              alt=""
-              fill
-              className="object-cover"
-            />
-          </div>
+          <Image
+            src={item.image}
+            alt=""
+            fill
+            className="object-cover"
+          />
         </SwiperSlide>
       ))}
     </Swiper>

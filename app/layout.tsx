@@ -3,6 +3,7 @@ import Footer from "@/app/components/layout/Footer";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
 import "./globals.css";
+import FloatingContact from "./components/layout/FloatingContact";
 
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
@@ -19,6 +20,7 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer/>
+        <FloatingContact/>
       </body>
     </html>
   );

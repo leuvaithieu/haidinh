@@ -1,0 +1,144 @@
+.wrapper{
+    position:fixed;
+    right:24px;
+    bottom:24px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    z-index:999;
+}
+
+.button{
+    width:58px;
+    height:58px;
+
+    border-radius:50%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    color:#fff;
+
+    text-decoration:none;
+
+    position:relative;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.18);
+
+    transition:.3s;
+}
+
+.button span{
+
+    position:absolute;
+
+    right:70px;
+
+    white-space:nowrap;
+
+    background:white;
+
+    color:#222;
+
+    padding:10px 18px;
+
+    border-radius:30px;
+
+    opacity:0;
+
+    transform:translateX(20px);
+
+    transition:.3s;
+
+    pointer-events:none;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+.button:hover{
+
+    transform:scale(1.08);
+
+}
+
+.button:hover span{
+
+    opacity:1;
+
+    transform:translateX(0);
+
+}
+
+.phone{
+
+    background:#d61f26;
+
+    animation:pulse 1.8s infinite;
+
+}
+
+.zalo{
+
+    background:#0068ff;
+
+}
+
+.messenger{
+
+    background:#0084ff;
+
+}
+
+.top{
+
+    background:#222;
+
+    border:none;
+
+    cursor:pointer;
+
+}
+
+@keyframes pulse{
+
+    0%{
+
+        box-shadow:0 0 0 0 rgba(214,31,38,.55);
+
+    }
+
+    70%{
+
+        box-shadow:0 0 0 18px rgba(214,31,38,0);
+
+    }
+
+    100%{
+
+        box-shadow:0 0 0 0 rgba(214,31,38,0);
+
+    }
+
+}
+
+@media(max-width:768px){
+
+    .button span{
+
+        display:none;
+
+    }
+
+    .wrapper{
+
+        right:18px;
+
+        bottom:18px;
+
+    }
+
+}

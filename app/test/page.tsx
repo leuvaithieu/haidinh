@@ -33,6 +33,29 @@ import { useState, useEffect } from 'react';
         sequence:number;
     }
 
+    type Vehicle = {
+        id:string;
+        licensePlate :string;
+        name : string;
+        seatCount :number;
+        vehicleType:string;
+        status:string;
+        createdAt:string;
+        updatedAt:string;
+    }
+
+    type Driver= {
+        id:string;
+        name:string;
+        phone:string;
+        licenseNumber:string;
+        licenseClass:string;
+        licenseExpiry:string;
+        status:string;
+        createdAt:string;
+        updatedAt:string;
+    }
+
 export default function TestPage() {
     const [form, setForm] = useState({
     fullName : '',
@@ -349,7 +372,7 @@ export default function TestPage() {
     function startEditRoutePoint(routePoint:RoutePoint){
         setEditingRoutePointId(routePoint.id);
         setEditingRoutePointName(routePoint.name);
-        setEditingRoutePointSequence(routePoint.sequence);
+        setEditingRoutePointSequence(String(routePoint.sequence));
     }
     // hàm update routePoint
     async function updateRoutePoint(routePointId:string){
@@ -359,7 +382,8 @@ export default function TestPage() {
         }
 
         if(!editingRoutePointSequence.trim()){
-            alert("Vui lòng nhập Sequence")
+            alert("Vui lòng nhập Sequence");
+            return;
         }
 
         const response = await fetch(
@@ -413,8 +437,360 @@ export default function TestPage() {
         ),
     }));
 
+    //  Phần Vehicle
+    const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+    
+    async function getVehicles(){
+        const response = await fetch("http://localhost:3000/vehicles");
+
+        if(!response.ok){
+            throw new Error("Không thể lấy danh sách xe")
+        }
+
+        const data = await response.json();
+
+        setVehicles(data);
+    }
+
+    useEffect(()=>{
+        getVehicles();
+    },[]);
+
+    const [vehicleLicensePlate, setVehicleLicensePlate] = useState("");
+    const [vehicleName, setVehicleName] = useState("");
+    const [vehicleSeatCount, setVehicleSeatCount] = useState("");
+    const [vehicleType, setVehicleType] = useState("");
+    const [vehicleStatus, setVehicleStatus] = useState("ACTIVE");
+
+    async function createVehicle(){
+        if(!vehicleLicensePlate.trim()){
+            alert ("Vui lòng nhập biển số xe");
+            return;
+        }
+        if(!vehicleName.trim()){
+            alert("Vui lòng nhập mã xe");
+            return;
+        }
+        if(!vehicleSeatCount.trim()){
+            alert("Vui lòng nhập số chỗ ngồi của xe");
+            return;
+        }
+        if(!vehicleType.trim()){
+            alert("Vui lòng nhập loại xe");
+            return;
+        }
+
+        const response = await fetch("http://localhost:3000/vehicles",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type" : "application/json",
+                },
+                body: JSON.stringify({
+                    licensePlate : vehicleLicensePlate,
+                    name : vehicleName,
+                    seatCount : Number(vehicleSeatCount),
+                    vehicleType : vehicleType,
+                    status: vehicleStatus,
+                })
+            }
+        )
+        if(!response.ok){
+            const error = await response.json();
+            alert(error.message || "Không thể tạo xe");
+            return;
+        }
+
+        await getVehicles();
+
+        setVehicleLicensePlate("");
+        setVehicleName("");
+        setVehicleSeatCount("");
+        setVehicleType("");
+        setVehicleStatus("ACTIVE");
+    }
+
+    function normalizeLicensePlate(value:string){
+        return value
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g,"")
+    }
+
+    function formatLicensePlate(value: string) {
+        const cleaned = normalizeLicensePlate(value);
+
+        if(cleaned.length <= 3){
+            return cleaned;
+        }
+
+        if(cleaned.length <= 6){
+            return cleaned;
+        }
+
+        return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}.${cleaned.slice(6, 8)}`;
+    }
+
+    async function deleteVehicle(vehicleId:string){
+        const confirmDelete = window.confirm("Bạn có chắc muốn xóa xe này không ??");
+        if(!confirmDelete){
+            return;
+        }
+
+        const response = await fetch(`http://localhost:3000/vehicles/${vehicleId}`,
+            {
+                method:"DELETE",
+            }
+        );
+
+        if (!response.ok){
+            const error = await response.json();
+            alert (error.message || "Không thể xóa xe này !");
+            return;
+        }
+        await getVehicles();
+    }
+
+    // update vehicle
+    const [editingVehicleId,setEditingVehicleId] = useState<string | null>(null);
+
+    function startEditVehicle(vehicle:Vehicle){
+        setEditingVehicleId(vehicle.id);
+
+        setVehicleLicensePlate(vehicle.licensePlate);
+        setVehicleName(vehicle.name);
+        setVehicleSeatCount(String(vehicle.seatCount));
+        setVehicleType(vehicle.vehicleType);
+        setVehicleStatus(vehicle.status);
+    }
+
+    async function updateVehicle(){
+        if(!editingVehicleId){
+            return;
+        }
+        if(!vehicleLicensePlate.trim()){
+            alert("Vui lòng nhập biển số xe")
+        }
+        if(!vehicleName.trim()){
+            alert("Vui lòng nhập mã xe");
+            return;
+        }
+        if(!vehicleSeatCount.trim()){
+            alert("Vui lòng chọn số chỗ ngồi");
+            return;
+        }
+        if(!vehicleType.trim()){
+            alert("Vui lòng chọn hãng");
+            return;
+        }
+        
+        const response = await fetch(
+            `http://localhost:3000/vehicles/${editingVehicleId}`,
+            {
+                method: "PATCH",
+
+                headers: {
+                    "Content-Type": "application/json",
+                },
+
+                body: JSON.stringify({
+                    licensePlate: normalizeLicensePlate(vehicleLicensePlate),
+                    name: vehicleName,
+                    seatCount: Number(vehicleSeatCount),
+                    vehicleType: vehicleType,
+                    status: vehicleStatus,
+                }),
+            }
+        );
+
+        if(!response.ok){
+            const error = await response.json();
+            alert (error.message||"Không thể cập nhật xe");
+            return;
+        }
+        await getVehicles();
+
+        // THoát chế độ sửa
+        setEditingVehicleId(null);
+
+        // Reset form
+        setVehicleLicensePlate("");
+        setVehicleName("");
+        setVehicleSeatCount("");
+        setVehicleType("");
+        setVehicleStatus("");
+    }
+
+    function cancelEditVehicle(){
+        setEditingVehicleId(null);
+        
+        setVehicleLicensePlate("");
+        setVehicleName("");
+        setVehicleSeatCount("");
+        setVehicleType("");
+        setVehicleStatus("");
+    }
+    
+    // Drivers
+    const [drivers, setDrivers] = useState<Driver[]>([]);
+
+    const [driverName,setDriverName] = useState("");
+    const [driverPhone,setDriverPhone] = useState("");
+    const [driverLicenseNumber, setDriverLicenseNumber] = useState("");
+    const [driverLicenseClass, setDriverLicenseClass] = useState("");
+    const [driverLicenseExpiry, setDriverLicenseExpiry] = useState("");
+    const [driverStatus, setDriverStatus] = useState("");
+
+    const [editingDriverId, setEditingDriverId] = useState<string | null>(null);
+
+    async function getDrivers(){
+        const response = await fetch("http://localhost:3000/drivers");
+
+        if(!response.ok){
+            throw new Error("Không thể lấy danh sách tài xế !");
+        }
+
+        const data = await response.json();
+        setDrivers(data);
+    }
+
+    useEffect(()=>{
+        getDrivers();
+    },[]);
+    
+    async function createDriver(){
+        if(!driverName.trim()){
+            alert("Vui lòng nhập tên tài xế");
+            return;
+        }
+        if(!driverPhone.trim()){
+            alert("Vui lòng nhập số điện thoại tài xế");
+            return;
+        }
+        if(!driverLicenseNumber.trim()){
+            alert("Vui lòng nhâp số GPLX");
+            return;
+        }
+        
+
+         const response = await fetch("http://localhost:3000/drivers", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name: driverName,
+                phone: driverPhone,
+                licenseNumber: driverLicenseNumber,
+                licenseClass: driverLicenseClass || undefined,
+                licenseExpiry: driverLicenseExpiry || undefined,
+                status: driverStatus,
+            }),
+        });
+        if(!response.ok){
+            const error = await response.json();
+            alert(error.message|| "Không thể tạo tài xế")
+        }
+
+        await getDrivers();
+
+        setDriverName("");
+        setDriverPhone("");
+        setDriverLicenseNumber("");
+        setDriverLicenseClass("");
+        setDriverLicenseExpiry("");
+        setDriverStatus("ACTIVE");
+    }
+
+    async function deleteDriver(driverId:string){
+        const confirmDelete = window.confirm("Bạn có chắc muốn xóa tài xế này không ? ");
+
+        if(!confirmDelete) return;
+
+        const response = await fetch(`http://localhost:3000/drivers/${driverId}`,
+            {
+                method:"DELETE"
+            },
+        );
+        if(!response.ok){
+            const error = await response.json();
+            alert(error.message || "Không thể xóa tài xế !");
+            return;
+        }
+        await getDrivers();
+    }
+
+    function startEditDriver(driver:Driver){
+        setEditingDriverId(driver.id);
+
+        setDriverName(driver.name);
+        setDriverPhone(driver.phone);
+        setDriverLicenseNumber(driver.licenseNumber);
+        setDriverLicenseClass(driver.licenseClass || "");
+        setDriverLicenseExpiry(driver.licenseExpiry ? driver.licenseExpiry.slice(0,10):"");
+        setDriverStatus(driver.status)
+    }
+
+    function cancelEditDriver(){
+        setEditingDriverId(null);
+
+        setDriverName("");
+        setDriverPhone("");
+        setDriverLicenseNumber("");
+        setDriverLicenseClass("");
+        setDriverLicenseExpiry("")
+        setDriverStatus("ACTIVE");
+    }
+
+    async function updateDriver() {
+        if (!editingDriverId) return;
+
+        if (!driverName.trim()) {
+            alert("Vui lòng nhập tên tài xế");
+            return;
+        }
+
+        if (!driverPhone.trim()) {
+            alert("Vui lòng nhập số điện thoại");
+            return;
+        }
+
+        if (!driverLicenseNumber.trim()) {
+            alert("Vui lòng nhập số GPLX");
+            return;
+        }
+
+        const response = await fetch(
+            `http://localhost:3000/drivers/${editingDriverId}`,
+            {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                name: driverName,
+                phone: driverPhone,
+                licenseNumber: driverLicenseNumber,
+                licenseClass: driverLicenseClass || undefined,
+                licenseExpiry: driverLicenseExpiry || undefined,
+                status: driverStatus,
+            }),
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            alert(error.message || "Không thể cập nhật tài xế");
+            return;
+        }
+
+    await getDrivers();
+
+    cancelEditDriver();
+    }
+    
+
     return (
-        <div style={{ maxWidth: 600, margin: "40px auto" }}>
+        <div style={{ maxWidth: 1024, margin: "40px auto" }}>
             <h1>Đăng ký khách hàng</h1>
 
             <div>
@@ -927,6 +1303,250 @@ export default function TestPage() {
                         )}
                     </div>
                 ))}
+            </div>
+            <div className="vehicle">
+                <h1 style={{fontSize:"25px" , fontWeight:"bold"}}>Form Vehicle</h1>
+                <div style={{display:"flex", flexDirection:"column", marginBottom:"30px"}}>
+                    <h2>Thêm xe</h2>
+                    <input 
+                        className="test-input"
+                        style={{marginBottom:"10px"}}
+                        type="text" 
+                        placeholder="Nhập biển số xe" 
+                        value={vehicleLicensePlate}
+                        onChange ={(e)=>setVehicleLicensePlate(e.target.value)} 
+                    />
+                    <select
+                        value={vehicleName}
+                        className = "test-input"
+                        onChange={(e)=>setVehicleName(e.target.value)}
+                    >
+                        <option value="">--- Chọn mã xe ---</option>
+                        {Array.from({ length: 40 }, (_, index) => {
+                            const vehicleCode = `HD-${String(index + 1).padStart(2, "0")}`;
+
+                            return (
+                                <option key={vehicleCode} value={vehicleCode}>
+                                    {vehicleCode}
+                                </option>
+                            );
+                        })}
+                    </select>
+                     <select
+                        className="test-input"
+                        style={{marginBottom:"10px"}}
+                        value={vehicleSeatCount}
+                        onChange={(e)=>setVehicleSeatCount(e.target.value)}
+                    >
+                        <option value="">Số ghế/phòng/giường</option>
+                        <option value="24">24</option>
+                        <option value="34">34</option>
+                        <option value="44">44</option>
+                    </select>
+                    <select
+                        className="test-input"
+                        style={{marginBottom:"10px"}}
+                        value={vehicleType}
+                        onChange={(e)=>setVehicleType(e.target.value)}
+                    >
+                        <option value="">--- Chọn hãng xe ---</option>
+                        <option value="Thaco">Thaco</option>
+                        <option value="Tracomeco">Tracomeco</option>
+                        <option value="Huyn-Dai">Huyn-Dai</option>
+                    </select>
+                    <select
+                        className="test-input"
+                        style={{marginBottom:"10px"}}
+                        value={vehicleStatus}
+                        onChange={(e)=>setVehicleStatus(e.target.value)}
+                    >
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="INACTIVE">INACTIVE</option>
+                    </select>
+                    <div style={{display:"flex" , justifyContent:"center"}}>
+                        <button
+                            className="test-button"
+                            onClick={editingVehicleId ? updateVehicle : createVehicle}
+                        >
+                            {editingVehicleId ? "Save" : "Add Vehicle"}
+                        </button>
+                        {editingVehicleId && (
+                            <button className="test-button" onClick={cancelEditVehicle}>
+                                Hủy
+                            </button>
+                        )}
+                    </div>
+                    
+                </div>
+                <div className="vehicle-table-container">
+                    <h2 style={{fontSize:"24px", fontWeight:"bold"}}>Danh sách xe</h2>
+                    <table className="vehicle-table">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Biển số</th>
+                                <th>Mã xe</th>
+                                <th>Số chỗ</th>
+                                <th>Loại xe</th>
+                                <th>Trạng thái</th>
+                                <th>Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {vehicles.map((vehicle,index)=>(
+                                <tr key={vehicle.id}>
+                                    <td>{index + 1}</td>
+                                    <td>{formatLicensePlate(vehicle.licensePlate)}</td>
+                                    <td>{vehicle.name}</td>
+                                    <td>{vehicle.seatCount}</td>
+                                    <td>{vehicle.vehicleType}</td>
+                                    <td><span className={`vehicle-status ${vehicle.status.toLowerCase()}`}>{vehicle.status}</span></td>
+                                    <td className="vehicle-actions">
+                                        <button 
+                                            className="vehicle-edit-button"
+                                            onClick={()=>startEditVehicle(vehicle)}
+                                        >
+                                            Sửa
+                                        </button>
+                                        <button 
+                                            className="vehicle-edit-button"
+                                            onClick={()=>deleteVehicle(vehicle.id)}
+                                        >
+                                            Xóa
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div className="driver">
+                <h1 style={{fontSize:"25px" , fontWeight:"bold"}}>Form Drivers</h1>
+                <div className="form-driver">
+                    <input
+                        style={{marginBottom:"10px"}}
+                        className="test-input" 
+                        type="text" 
+                        value={driverName}
+                        placeholder="Họ và tên"
+                        onChange={(e)=>setDriverName(e.target.value)}
+                    />
+                    <input
+                        style={{marginBottom:"10px"}}
+                        className="test-input" 
+                        type="text" 
+                        value={driverPhone}
+                        placeholder="Số điện thoại"
+                        onChange={(e)=>setDriverPhone(e.target.value)}
+                    />
+                    <input
+                        style={{marginBottom:"10px"}}
+                        className="test-input" 
+                        type="text" 
+                        value={driverLicenseNumber}
+                        placeholder="Số GPLX"
+                        onChange={(e)=>setDriverLicenseNumber(e.target.value)}
+                    />
+                     <select
+                        style={{marginBottom:"10px"}}
+                        className="test-input"  
+                        value={driverLicenseClass}
+                        onChange={(e)=>setDriverLicenseClass(e.target.value)}
+                    >
+                        <option value="">--- Chọn hạng bằng ---</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="FC">FC</option>
+                    </select>
+                    <input
+                        type="date" 
+                        className="test-input" 
+                        value={driverLicenseExpiry}
+                        onChange={(e) => setDriverLicenseExpiry(e.target.value)}
+                        
+                    />
+                    <select
+                        value={driverStatus}
+                        className="test-input"
+                        onChange = {(e)=>setDriverStatus(e.target.value)}
+                    >
+                        <option>--- Chọn trạng thái ---</option>
+                        <option value="ACTIVE">Đang hoạt động</option>
+                        <option value="INACTIVE">Ngừng hoạt động</option>
+                    </select>
+                    <div>
+                        <button className="test-button" onClick={ editingDriverId ? updateDriver : createDriver}>
+                            {editingDriverId ? "Lưu thay đổi" : "Thêm tài xế"}
+                            </button>
+
+                            {editingDriverId && (
+                            <button
+                                type="button"
+                                onClick={cancelEditDriver}
+                                className="driver-cancel-button"
+                            >
+                                Hủy
+                        </button>
+                        )}
+                    </div>
+                </div>
+                <div className="driver-table-container">
+                    <table className="vehicle-table">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Họ tên</th>
+                                <th>SĐT</th>
+                                <th>Số GPLX</th>
+                                <th>Hạng</th>
+                                <th>Ngày hết hạn</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {drivers.map((driver, index)=>(
+                                <tr key={driver.id}>
+                                    <td>{index + 1}</td>
+                                    <td>{driver.name}</td>
+                                    <td>{driver.phone}</td>
+                                    <td>{driver.licenseNumber}</td>
+                                    <td>{driver.licenseClass || "-"}</td>
+                                    <td>{driver.licenseExpiry ? new Date(driver.licenseExpiry).toLocaleDateString("vi-VN"):"-"}</td>
+                                    <td>
+                                        <span
+                                            className={`driver-status ${
+                                            driver.status === "ACTIVE" ? "active" : "inactive"
+                                            }`}
+                                        >
+                                            {driver.status === "ACTIVE"
+                                            ? "Đang hoạt động"
+                                            : "Ngừng hoạt động"}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div className="driver-actions">
+                                            <button
+                                                className="driver-edit-button"
+                                                onClick={() => startEditDriver(driver)}
+                                            >
+                                                Sửa
+                                            </button>
+
+                                            <button
+                                                className="driver-delete-button"
+                                                onClick={() => deleteDriver(driver.id)}
+                                            >
+                                                Xóa
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

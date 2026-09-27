@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Menu, LogOut, UserCircle } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 
 type User = {
@@ -13,7 +14,13 @@ type User = {
   status: string;
 };
 
-export default function AdminHeader() {
+type AdminHeaderProps = {
+  onMenuClick: () => void;
+};
+
+export default function AdminHeader({
+  onMenuClick,
+}: AdminHeaderProps) {
   const router = useRouter();
 
   const [user, setUser] = useState<User | null>(null);
@@ -29,7 +36,6 @@ export default function AdminHeader() {
       }
 
       const data = await response.json();
-
       setUser(data);
     }
 
@@ -41,47 +47,76 @@ export default function AdminHeader() {
     router.replace('/admin/login');
   }
 
+  const displayName = user?.name || user?.username || 'Đang tải...';
+
+  const avatarLetter = displayName
+    .charAt(0)
+    .toUpperCase();
+
   return (
-    <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
-      {/* Bên trái */}
-      <div>
-        <h1 className="text-lg font-semibold text-slate-800">
-          Quản trị hệ thống
-        </h1>
+    <header className="sticky top-0 z-30 h-16 border-b border-slate-200 bg-white">
+      <div className="flex h-full items-center justify-between px-4 sm:px-6">
 
-        <p className="text-xs text-slate-400">
-          Hải Định
-        </p>
-      </div>
-
-      {/* Bên phải */}
-      <div className="flex items-center gap-4">
-        {/* User */}
+        {/* Left */}
         <div className="flex items-center gap-3">
-          {/* Avatar */}
-            <div className="w-9 h-9 rounded-full bg-red-600 text-white flex items-center justify-center font-semibold">
-                {(user?.name || user?.username || '?').charAt(0).toUpperCase()}
-            </div>
 
-          {/* Thông tin */}
-          <div className="hidden sm:block">
-            <p className="text-sm font-medium text-slate-800">
-              {user?.name ?? 'Đang tải...'}
-            </p>
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 md:hidden"
+          >
+            <Menu size={22} />
+          </button>
 
-            <p className="text-xs text-slate-400">
-              {user?.role ?? ''}
+          <div>
+            <h1 className="text-base font-semibold text-slate-900 sm:text-lg">
+              Quản trị hệ thống
+            </h1>
+
+            <p className="hidden text-xs text-slate-400 sm:block">
+              Hải Định
             </p>
           </div>
+
         </div>
 
-        {/* Logout */}
-        <button
-          onClick={handleLogout}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
-        >
-          Đăng xuất
-        </button>
+        {/* Right */}
+        <div className="flex items-center gap-3 sm:gap-4">
+
+          {/* User */}
+          <div className="flex items-center gap-2 sm:gap-3">
+
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-sm font-semibold text-white">
+              {avatarLetter}
+            </div>
+
+            <div className="hidden sm:block">
+              <p className="text-sm font-medium text-slate-800">
+                {displayName}
+              </p>
+
+              <p className="text-xs text-slate-400">
+                {user?.role ?? ''}
+              </p>
+            </div>
+
+          </div>
+
+          {/* Logout */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100 hover:text-red-600 sm:h-auto sm:w-auto sm:gap-2 sm:px-3 sm:py-2"
+          >
+            <LogOut size={18} />
+
+            <span className="hidden text-sm font-medium sm:inline">
+              Đăng xuất
+            </span>
+          </button>
+
+        </div>
+
       </div>
     </header>
   );

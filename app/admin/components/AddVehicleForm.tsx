@@ -4,11 +4,17 @@ import { useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api';
 
 type Vehicle = {
-  name: string;
+    id:string,
+    name: string,
+    licensePlate:string,
+    seatCount:number,
+    vehicleType:string,
+    status?:string,
 };
 
 type AddVehicleFormProps = {
   onSuccess: () => void;
+  vehicle?:Vehicle,
 };
 
 type FormErrors = {
@@ -16,10 +22,11 @@ type FormErrors = {
     name?:string,
     seatCount?:string,
     vehicleType?:string,
+    general?:string,
 }
 
 export default function AddVehicleForm({
-  onSuccess,
+  onSuccess,vehicle,
 }: AddVehicleFormProps) {
     const [licensePlate, setLicensePlate] = useState('');
     const [name, setName] = useState('');
@@ -31,32 +38,46 @@ export default function AddVehicleForm({
 
     const [errors, setErrors] = useState<FormErrors>({});
 
-    useEffect(() => {
-        async function getVehicles() {
-        const response = await apiFetch('/vehicles');
+    const isEditMode = !!vehicle;
 
-        if (!response.ok) {
+    useEffect(()=>{
+        if(!vehicle){
             return;
         }
 
-        const vehicles: Vehicle[] = await response.json();
+        setLicensePlate(vehicle.licensePlate);
+        setName(vehicle.name);
+        setSeatCount(String(vehicle.seatCount));
+        setVehicleType(vehicle.vehicleType);
+        setStatus(vehicle.status ?? 'ACTIVE')
+    },[vehicle])
 
-        const usedNames = vehicles.map(
-            (vehicle) => vehicle.name,
-        );
+    useEffect(() => {
+        async function getVehicles() {
+            const response = await apiFetch('/vehicles');
 
-        const allNames = Array.from(
-            { length: 40 },
-            (_, index) =>
-            `HD-${String(index + 1).padStart(2, '0')}`,
-        );
+            if (!response.ok) {
+                return;
+            }
 
-        const availableNames = allNames.filter(
-            (vehicleName) =>
-            !usedNames.includes(vehicleName),
-        );
+            const vehicles: Vehicle[] = await response.json();
 
-        setAvailableVehicleNames(availableNames);
+            const usedNames = vehicles
+            .filter((item)=>item.id !== vehicle?.id)
+            .map((item)=>item.name);
+
+            const allNames = Array.from(
+                { length: 40 },
+                (_, index) =>
+                `HD-${String(index + 1).padStart(2, '0')}`,
+            );
+
+            const availableNames = allNames.filter(
+                (vehicleName) =>
+                !usedNames.includes(vehicleName),
+            );
+
+            setAvailableVehicleNames(availableNames);
         }
 
         getVehicles();
@@ -79,7 +100,10 @@ export default function AddVehicleForm({
 
         if(!vehicleType){
             newErrors.vehicleType = 'Vui lòng nhập hãng xe '
-        }
+        };
+        setErrors(newErrors);
+
+        return Object.keys(newErrors).length === 0 ;
     }
 
     async function handleSubmit(
@@ -87,8 +111,16 @@ export default function AddVehicleForm({
     ) {
         event.preventDefault();
 
-        const response = await apiFetch('/vehicles', {
-        method: 'POST',
+        if(!validateForm()){
+            return;
+        }
+
+        const endpoint = isEditMode ? '/vehicles' : '/vehicles/${vehicle.id}';
+        const method = isEditMode ? 'POST' : 'PATCH';
+        
+
+        const response = await apiFetch(endpoint, {
+        method,
         body: JSON.stringify({
             licensePlate,
             name,
@@ -99,8 +131,17 @@ export default function AddVehicleForm({
         });
 
         if (!response.ok) {
-        console.log('Thêm xe thất bại');
-        return;
+            const data = await response.json()
+            if(response.status === 409){
+                setErrors({
+                    general:data.message || 'Biển số xe này đã tồn tại !'
+                });
+                return;
+            }
+            setErrors({
+                general:'Có lỗi xảy ra ! Vui lòng thử lại  !'
+            })
+            return;
         }
 
         console.log('Thêm xe thành công');
@@ -130,10 +171,17 @@ export default function AddVehicleForm({
             value={licensePlate}
             onChange={(event) => {
                 setLicensePlate(event.target.value);
+                setErrors((prev)=>({
+                    ...prev,
+                    licensePlate:undefined,
+                }))
             }}
             placeholder="VD: 36B-01459"
             className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
             />
+            {errors.licensePlate && (
+                <p className="mt-1 text-xs text-red-600">{errors.licensePlate}</p>
+            )}
         </div>
 
         {/* Mã xe */}
@@ -143,23 +191,30 @@ export default function AddVehicleForm({
             </label>
 
             <select
-            value={name}
-            onChange={(event) => {
-                setName(event.target.value);
-            }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
-            >
-            <option value="">Chọn mã xe</option>
-
-            {availableVehicleNames.map((vehicleName) => (
-                <option
-                key={vehicleName}
-                value={vehicleName}
+                value={name}
+                onChange={(event) => {
+                    setName(event.target.value);
+                    setErrors((prev)=>({
+                        ...prev,
+                        name:undefined,
+                    }))
+                }}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
                 >
-                {vehicleName}
-                </option>
-            ))}
+                <option value="">Chọn mã xe</option>
+
+                {availableVehicleNames.map((vehicleName) => (
+                    <option
+                    key={vehicleName}
+                    value={vehicleName}
+                    >
+                    {vehicleName}
+                    </option>
+                ))}
             </select>
+            {errors.name && (
+                <p className="mt-1 text-xs text-red-600">{errors.name}</p>
+            )}
         </div>
 
         {/* Số chỗ */}
@@ -169,17 +224,24 @@ export default function AddVehicleForm({
             </label>
 
             <select
-            value={seatCount}
-            onChange={(event) => {
-                setSeatCount(event.target.value);
-            }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
-            >
-            <option value="">Chọn số chỗ</option>
-            <option value="24">24 chỗ</option>
-            <option value="38">38 chỗ</option>
-            <option value="44">44 chỗ</option>
+                value={seatCount}
+                onChange={(event) => {
+                    setSeatCount(event.target.value);
+                    setErrors((prev)=>({
+                        ...prev,
+                        seatCount:undefined,
+                    }))
+                }}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                >
+                <option value="">Chọn số chỗ</option>
+                <option value="24">24 chỗ</option>
+                <option value="38">38 chỗ</option>
+                <option value="44">44 chỗ</option>
             </select>
+            {errors.seatCount && (
+                <p className="mt-1 text-xs text-red-600">{errors.seatCount}</p>
+            )}
         </div>
 
         {/* Hãng xe */}
@@ -189,17 +251,24 @@ export default function AddVehicleForm({
             </label>
 
             <select
-            value={vehicleType}
-            onChange={(event) => {
-                setVehicleType(event.target.value);
-            }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
-            >
-            <option value="">Chọn hãng xe</option>
-            <option value="Thaco">Thaco</option>
-            <option value="Hyundai">Hyundai</option>
-            <option value="Samco">Samco</option>
+                value={vehicleType}
+                onChange={(event) => {
+                    setVehicleType(event.target.value);
+                    setErrors((prev)=>({
+                        ...prev,
+                        vehicleType:undefined,
+                    }))
+                }}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                >
+                <option value="">Chọn hãng xe</option>
+                <option value="Thaco">Thaco</option>
+                <option value="Hyundai">Hyundai</option>
+                <option value="Samco">Samco</option>
             </select>
+            {errors.vehicleType && (
+                <p className="mt-1 text-xs text-red-600">{errors.vehicleType}</p>
+            )}
         </div>
 
         {/* Trạng thái */}
@@ -225,8 +294,11 @@ export default function AddVehicleForm({
             type="submit"
             className="w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
         >
-            Thêm xe
+            {isEditMode ?'Lưu thay đổi' : 'Thêm xe'}
         </button>
+        {errors.general &&(
+            <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{errors.general}</div>
+        )}
         </form>
     );
 }

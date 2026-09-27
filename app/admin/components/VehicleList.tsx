@@ -1,19 +1,40 @@
 type Vehicle = {
   id: string;
-  licensePlate: string;
-  vehicleType: string;
-  seatCount: number;
-  status: string;
+  licensePlate: string,
+  vehicleType: string,
+  seatCount: number,
+  status: string,
   name:string,
 };
 
 type VehicleListProps = {
-  vehicles: Vehicle[];
+  vehicles: Vehicle[],
+  onEdit:(vehicle:Vehicle) =>void,
+
 };
 
 export default function VehicleList({
-  vehicles,
+  vehicles,onEdit,
 }: VehicleListProps) {
+  function normalizeLicensePlate(value:string){
+    return value
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g,"")
+  }
+  
+  function formatLicensePlate(value: string) {
+      const cleaned = normalizeLicensePlate(value);
+
+      if(cleaned.length <= 3){
+          return cleaned;
+      }
+
+      if(cleaned.length <= 6){
+          return cleaned;
+      }
+
+      return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}.${cleaned.slice(6, 8)}`;
+  }
   return (
     <>
       {/* Desktop */}
@@ -21,22 +42,27 @@ export default function VehicleList({
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
+              <th className="px-6 py-3">STT</th>
               <th className="px-6 py-3">Biển số</th>
               <th className="px-6 py-3">Loại xe</th>
               <th className="px-6 py-3">Mã xe</th>
               <th className="px-6 py-3">Số chỗ</th>
               <th className="px-6 py-3">Trạng thái</th>
+              <th className="px-6 py-3 text-right">Thao tác</th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-100">
-            {vehicles.map((vehicle) => (
+            {vehicles.map((vehicle,index) => (
               <tr
                 key={vehicle.id}
                 className="transition hover:bg-slate-50"
               >
                 <td className="px-6 py-4 font-medium text-slate-900">
-                  {vehicle.licensePlate}
+                  {index + 1}
+                </td>
+                <td className="px-6 py-4 font-medium text-slate-900">
+                  {formatLicensePlate(vehicle.licensePlate)}
                 </td>
                 <td className="px-6 py-4 text-slate-600">
                   {vehicle.vehicleType}
@@ -57,6 +83,15 @@ export default function VehicleList({
                   >
                     {vehicle.status}
                   </span>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(vehicle)}
+                    className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
+                  >
+                    Sửa
+                  </button>
                 </td>
               </tr>
             ))}
@@ -99,6 +134,15 @@ export default function VehicleList({
               <p className="text-sm text-slate-500">
                 Số chỗ: {vehicle.seatCount}
               </p>
+            </div>
+            <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={() => onEdit(vehicle)}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
+              >
+                Sửa
+              </button>
             </div>
           </div>
         ))}

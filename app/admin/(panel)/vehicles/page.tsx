@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api";
 import VehicleList from "../../components/VehicleList";
 import PageHeader from "../../components/PageHeader";
 import AddVehicleForm from "../../components/AddVehicleForm";
+import ConfirmModal from "../../components/ConfirmModal";
 
 type Vehicle = {
     id:string,
@@ -18,7 +19,21 @@ type Vehicle = {
 export default function VehiclesPage(){
     const[vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [isVehicleFormOpen, setIsVehicleFormOpen] = useState(false);
-    const [editingVehicle,setEditingVehicle] = useState<Vehicle |null>(null)
+    const [editingVehicle,setEditingVehicle] = useState<Vehicle |null>(null);
+    const [currentUserRole, setCurrentUserRole] = useState("");
+    const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
+    const [vehicleToEdit, setVehicleToEdit] = useState<Vehicle |null>(null);
+
+    async function getCurrentUser(){
+        const response = await apiFetch('/auth/me');
+
+        if(!response.ok){
+            return ;
+        }
+
+        const data = await response.json();
+        setCurrentUserRole(data.role);
+    }
 
     async function getVehicles(){
         const response = await apiFetch('/vehicles');
@@ -33,16 +48,50 @@ export default function VehiclesPage(){
     }
     useEffect(()=>{
         getVehicles();
+        getCurrentUser();
     },[]);
 
     function handleAddVehicle(){
         setEditingVehicle(null);
         setIsVehicleFormOpen(true)
     }
+    function handleEditVehicle(vehicle: Vehicle) {
+        setEditingVehicle(vehicle);
+    }
 
     function handleCloseForm(){
         setIsVehicleFormOpen(false);
         setEditingVehicle(null);
+    }
+
+    function handleDeleteVehicle(vehicle:Vehicle){
+        setVehicleToDelete(vehicle);
+    }
+
+    async function confirmDeleteVehicle(){
+        if(!vehicleToDelete){
+            return;
+        }
+
+        const response = await apiFetch(`/vehicles/${vehicleToDelete.id}`,{method:'DELETE'})
+
+        if(!response.ok){
+            console.log('Xóa xe thất bại');
+            return;
+        }
+
+        await getVehicles();
+        setVehicleToDelete(null);
+    }
+
+    function confirmEditVehicle(){
+        if(!vehicleToDelete){
+            return;
+        }
+
+        setEditingVehicle(vehicleToEdit);
+        setVehicleToEdit(null);
+        setIsVehicleFormOpen(true)
     }
     
 
@@ -53,9 +102,7 @@ export default function VehiclesPage(){
                 description="Danh sách các xe đang quản lý"
                 action={{
                     label:'Thêm xe',
-                    onClick:()=>{
-                        setIsVehicleFormOpen(true)
-                    }
+                    onClick: handleAddVehicle,
                 }}
             />
             {isVehicleFormOpen && (
@@ -84,18 +131,45 @@ export default function VehiclesPage(){
                     </div>
 
                     <AddVehicleForm
-                        onSuccess={() => {
-                        setIsVehicleFormOpen(false);
-                        getVehicles();
+                        vehicle={editingVehicle ?? undefined}
+                        onSuccess={async () => {
+                            await getVehicles();
+                            handleCloseForm();
                         }}
                     />
                 </div>
             </div>
             )}
-            <VehicleList vehicles= {vehicles} onEdit={(vehicle)=>{
-                setEditingVehicle(vehicle);
-                setIsVehicleFormOpen(true)
-            }}/>
+            <VehicleList 
+                vehicles= {vehicles} 
+                onEdit={handleEditVehicle}
+                userRole = {currentUserRole}
+                onDelete={handleDeleteVehicle}
+            />
+            <ConfirmModal
+                isOpen={vehicleToDelete !== null}
+                title="Xóa xe"
+                message={
+                    vehicleToDelete
+                    ? `Bạn có chắc chắn muốn xóa xe ${vehicleToDelete.name} - ${vehicleToDelete.licensePlate}?`
+                    : ''
+                }
+                confirmText="Xóa"
+                cancelText="Hủy"
+                onConfirm={confirmDeleteVehicle}
+                onCancel={() => setVehicleToDelete(null)}
+            />
+            <ConfirmModal
+                isOpen={vehicleToEdit !== null}
+                title = "Chỉnh sửa xe"
+                message= {
+                    vehicleToEdit ? `Bạn có muốn chỉnh sửa thông tin xe ${vehicleToEdit?.name} - ${vehicleToEdit?.licensePlate} ?` : ''
+                }
+                confirmText = "Chỉnh sửa"
+                cancelText= "Hủy"
+                onConfirm={confirmEditVehicle}
+                onCancel={()=>setVehicleToEdit(null)}
+            />
         </main>
     )
 }

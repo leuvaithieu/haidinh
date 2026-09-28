@@ -10,11 +10,13 @@ type Vehicle = {
 type VehicleListProps = {
   vehicles: Vehicle[],
   onEdit:(vehicle:Vehicle) =>void,
+  onDelete:(vehicle:Vehicle)=>void,
+  userRole:string,
 
 };
 
 export default function VehicleList({
-  vehicles,onEdit,
+  vehicles,onEdit,onDelete, userRole
 }: VehicleListProps) {
   function normalizeLicensePlate(value:string){
     return value
@@ -92,6 +94,15 @@ export default function VehicleList({
                   >
                     Sửa
                   </button>
+                  {userRole ==='ADMIN' && (
+                    <button 
+                      type="button" 
+                      onClick={()=> onDelete(vehicle)}
+                      className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                    >
+                      Xóa
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -143,6 +154,15 @@ export default function VehicleList({
               >
                 Sửa
               </button>
+              {userRole ==='ADMIN' && (
+              <button 
+                type="button" 
+                onClick={()=> onDelete(vehicle)}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+              >
+                Xóa
+              </button>
+              )}
             </div>
           </div>
         ))}

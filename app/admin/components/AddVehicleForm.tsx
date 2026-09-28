@@ -81,7 +81,7 @@ export default function AddVehicleForm({
         }
 
         getVehicles();
-    }, []);
+    }, [vehicle]);
 
     async function validateForm(){
         const newErrors:FormErrors = {};
@@ -115,8 +115,8 @@ export default function AddVehicleForm({
             return;
         }
 
-        const endpoint = isEditMode ? '/vehicles' : '/vehicles/${vehicle.id}';
-        const method = isEditMode ? 'POST' : 'PATCH';
+        const endpoint = isEditMode ? `/vehicles/${vehicle.id}` : '/vehicles';
+        const method = isEditMode ? 'PATCH' : 'POST';
         
 
         const response = await apiFetch(endpoint, {

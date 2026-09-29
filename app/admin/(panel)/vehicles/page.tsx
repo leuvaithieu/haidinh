@@ -2,10 +2,11 @@
 
 import { useEffect,useState } from "react";
 import { apiFetch } from "@/lib/api";
-import VehicleList from "../../components/VehicleList";
+import VehicleList from "./components/VehicleList";
 import PageHeader from "../../components/PageHeader";
-import AddVehicleForm from "../../components/AddVehicleForm";
+import AddVehicleForm from "./components/AddVehicleForm";
 import ConfirmModal from "../../components/ConfirmModal";
+import Toast from "../../components/Toast";
 
 type Vehicle = {
     id:string,
@@ -22,7 +23,10 @@ export default function VehiclesPage(){
     const [editingVehicle,setEditingVehicle] = useState<Vehicle |null>(null);
     const [currentUserRole, setCurrentUserRole] = useState("");
     const [vehicleToDelete, setVehicleToDelete] = useState<Vehicle | null>(null);
-    const [vehicleToEdit, setVehicleToEdit] = useState<Vehicle |null>(null);
+    const [toast, setToast] = useState<{
+        message:string,
+        type:'success'|'error',
+    } | null>(null)
 
     async function getCurrentUser(){
         const response = await apiFetch('/auth/me');
@@ -57,6 +61,7 @@ export default function VehiclesPage(){
     }
     function handleEditVehicle(vehicle: Vehicle) {
         setEditingVehicle(vehicle);
+        setIsVehicleFormOpen(true);
     }
 
     function handleCloseForm(){
@@ -75,24 +80,24 @@ export default function VehiclesPage(){
 
         const response = await apiFetch(`/vehicles/${vehicleToDelete.id}`,{method:'DELETE'})
 
-        if(!response.ok){
-            console.log('Xóa xe thất bại');
-            return;
-        }
+            if (!response.ok) {
+                setToast({
+                    message: 'Xóa xe thất bại',
+                    type: 'error',
+                });
+
+                return;
+            }
 
         await getVehicles();
         setVehicleToDelete(null);
+
+        setToast({
+            message : `Đã xóa xe ${vehicleToDelete.licensePlate}`,
+            type:'success',
+        })
     }
 
-    function confirmEditVehicle(){
-        if(!vehicleToDelete){
-            return;
-        }
-
-        setEditingVehicle(vehicleToEdit);
-        setVehicleToEdit(null);
-        setIsVehicleFormOpen(true)
-    }
     
 
     return (
@@ -132,9 +137,14 @@ export default function VehiclesPage(){
 
                     <AddVehicleForm
                         vehicle={editingVehicle ?? undefined}
-                        onSuccess={async () => {
+                        onSuccess={async (message) => {
                             await getVehicles();
                             handleCloseForm();
+
+                            setToast({
+                                message,
+                                type: 'success',
+                            });
                         }}
                     />
                 </div>
@@ -159,17 +169,13 @@ export default function VehiclesPage(){
                 onConfirm={confirmDeleteVehicle}
                 onCancel={() => setVehicleToDelete(null)}
             />
-            <ConfirmModal
-                isOpen={vehicleToEdit !== null}
-                title = "Chỉnh sửa xe"
-                message= {
-                    vehicleToEdit ? `Bạn có muốn chỉnh sửa thông tin xe ${vehicleToEdit?.name} - ${vehicleToEdit?.licensePlate} ?` : ''
-                }
-                confirmText = "Chỉnh sửa"
-                cancelText= "Hủy"
-                onConfirm={confirmEditVehicle}
-                onCancel={()=>setVehicleToEdit(null)}
-            />
+            {toast && (
+                <Toast
+                    message = {toast.message}
+                    type = {toast.type}
+                    onClose = {()=> setToast(null)}
+                />
+            )}
         </main>
     )
 }

@@ -1,8 +1,8 @@
 'use client';
 
-import StatCard from "../../components/StartCard";
-import TodayTrips from "../../components/TodayTrips";
-import RecentBookings from "../../components/RecentBokings";
+import StatCard from "./components/StartCard";
+import TodayTrips from "./components/TodayTrips";
+import RecentBookings from "./components/RecentBokings";
 
 export default function DashboardPage() {
   return (

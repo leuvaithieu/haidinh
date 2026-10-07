@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type SearchAutoCompleteProps<T> = {
+    value: string;
     placeholder?: string;
+    onChange: (value: string) => void;
     onSearch: (search: string) => Promise<T[]>;
     onSelect: (item: T) => void;
     getItemLabel: (item: T) => string;
@@ -11,29 +13,33 @@ type SearchAutoCompleteProps<T> = {
 };
 
 export default function SearchAutoComplete<T>({
+    value,
     placeholder = 'Tìm kiếm...',
+    onChange,
     onSearch,
     onSelect,
     getItemLabel,
     renderItem,
 }: SearchAutoCompleteProps<T>) {
-    const [search, setSearch] = useState('');
     const [suggestions, setSuggestions] = useState<T[]>([]);
     const [isOpen, setIsOpen] = useState(false);
 
+    const isFocusedRef = useRef(false);
+
     useEffect(() => {
-        if (!search.trim()) {
+        if (!value.trim()) {
             setSuggestions([]);
             setIsOpen(false);
             return;
         }
 
         const timer = setTimeout(async () => {
-            const data = await onSearch(search);
+            const data = await onSearch(value);
 
             setSuggestions(data);
 
-            if (data.length > 0) {
+            // Chỉ mở dropdown nếu input vẫn đang được focus
+            if (isFocusedRef.current && data.length > 0) {
                 setIsOpen(true);
             } else {
                 setIsOpen(false);
@@ -43,11 +49,12 @@ export default function SearchAutoComplete<T>({
         return () => {
             clearTimeout(timer);
         };
-    }, [search, onSearch]);
+    }, [value, onSearch]);
 
     function handleSelect(item: T) {
-        setSearch(getItemLabel(item));
+        const label = getItemLabel(item);
 
+        onChange(label);
         setSuggestions([]);
         setIsOpen(false);
 
@@ -58,15 +65,20 @@ export default function SearchAutoComplete<T>({
         <div className="relative w-full">
             <input
                 type="text"
-                value={search}
+                value={value}
                 placeholder={placeholder}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                    onChange(e.target.value);
+                }}
                 onFocus={() => {
+                    isFocusedRef.current = true;
+
                     if (suggestions.length > 0) {
                         setIsOpen(true);
                     }
                 }}
                 onBlur={() => {
+                    isFocusedRef.current = false;
                     setIsOpen(false);
                 }}
                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-100"

@@ -152,10 +152,12 @@ export default function CustomerPage(){
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-start">
                 <div className="w-full sm:max-w-md">
                     <SearchAutoComplete<Customer>
+                        value={search}
                         placeholder="Tìm khách hàng..."
+                        onChange={setSearch}
                         onSearch={searchCustomer}
                         onSelect={(customer) => {
-                            console.log("Customer đã chọn:", customer);
+                            console.log('Customer đã chọn:', customer);
                         }}
                         getItemLabel={(customer) => customer.fullName}
                         renderItem={(customer) => (
@@ -213,48 +215,49 @@ export default function CustomerPage(){
                 <CustomerForm
                     customer={editingCustomer ?? undefined}
                     onSuccess={async (message) => {
-                    await getCustomers();
+                        await getCustomers();
 
-                    handleCloseForm();
+                        handleCloseForm();
 
-                    setToast({
-                        message,
-                        type: 'success',
-                    });
+                        setToast({
+                            message,
+                            type: 'success',
+                        });
                     }}
+                    
                 />
                 </div>
             </div>
             )}
 
             <CustomerList
-            customers={customers}
-            onView={handleCustomerView}
-            onEdit={handleEditCustomer}
-            onDelete={handleDeleteCustomer}
-            userRole={currentUserRole}
+                customers={customers}
+                onView={handleCustomerView}
+                onEdit={handleEditCustomer}
+                onDelete={handleDeleteCustomer}
+                userRole={currentUserRole}
             />
 
             <ConfirmModal
-            isOpen={customerToDelete !== null}
-            title="Xóa khách hàng"
-            message={
-                customerToDelete
-                ? `Bạn có chắc muốn xóa khách hàng ${customerToDelete.fullName} - ${customerToDelete.phone} không?`
-                : ''
-            }
-            confirmText="Xóa"
-            cancelText="Hủy"
-            onConfirm={confirmDeleteCustomer}
-            onCancel={() => setCustomerToDelete(null)}
+                isOpen={customerToDelete !== null}
+                title="Xóa khách hàng"
+                message={
+                    customerToDelete
+                    ? `Bạn có chắc muốn xóa khách hàng ${customerToDelete.fullName} - ${customerToDelete.phone} không?`
+                    : ''
+                }
+                confirmText="Xóa"
+                cancelText="Hủy"
+                onConfirm={confirmDeleteCustomer}
+                onCancel={() => setCustomerToDelete(null)}
             />
 
             {toast && (
-            <Toast
-                message={toast.message}
-                type={toast.type}
-                onClose={() => setToast(null)}
-            />
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
             )}
         </main>
     );

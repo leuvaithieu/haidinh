@@ -26,6 +26,8 @@ type ToastState = {
 export default function DriverPage() {
     const [drivers, setDrivers] = useState<Driver[]>([]);
 
+    const [search, setSearch] = useState('');
+
     const [isDriverFormOpen, setIsDriverFormOpen] =
         useState(false);
 
@@ -89,8 +91,8 @@ export default function DriverPage() {
             return;
         }
 
-        const driverName = driverToDelete.name;
         const driverId = driverToDelete.id;
+        const driverName = driverToDelete.name;
 
         const response = await apiFetch(
             `/drivers/${driverId}`,
@@ -117,6 +119,12 @@ export default function DriverPage() {
             type: 'success',
         });
     }
+
+    const filteredDrivers = drivers.filter((driver) =>
+        driver.name
+            .toLowerCase()
+            .includes(search.toLowerCase()),
+    );
 
     return (
         <div className="space-y-6">
@@ -146,10 +154,25 @@ export default function DriverPage() {
             </div>
 
 
+            {/* Search */}
+
+            <div className="w-full sm:max-w-md">
+
+                <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Tìm theo tên tài xế..."
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                />
+
+            </div>
+
+
             {/* Driver list */}
 
             <DriverList
-                drivers={drivers}
+                drivers={filteredDrivers}
                 onEdit={handleDriverEdit}
                 onDelete={handleDriverDelete}
                 userRole={currentUserRole}
@@ -161,7 +184,6 @@ export default function DriverPage() {
             {isDriverFormOpen && (
                 <DriverForm
                     driver={editingDriver}
-
                     onSuccess={async (message) => {
                         setIsDriverFormOpen(false);
                         setEditingDriver(null);
@@ -173,7 +195,6 @@ export default function DriverPage() {
                             type: 'success',
                         });
                     }}
-
                     onClose={() => {
                         setIsDriverFormOpen(false);
                         setEditingDriver(null);

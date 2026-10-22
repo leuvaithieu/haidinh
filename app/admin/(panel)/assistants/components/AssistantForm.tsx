@@ -8,7 +8,7 @@ type Assistant = {
     name: string;
     phone: string;
     cccd: string;
-    status: string;
+    status?: string;
 };
 
 type AssistantFormProps = {

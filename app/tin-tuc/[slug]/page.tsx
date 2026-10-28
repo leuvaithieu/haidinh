@@ -17,6 +17,7 @@ type Article = {
   publishedAt: string | null;
 };
 
+
 async function getArticle(slug: string): Promise<Article | null> {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -46,6 +47,8 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
+
+
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
@@ -74,12 +77,24 @@ export async function generateMetadata({
         article.excerpt ||
         article.title,
       images: article.coverImage
-        ? [article.coverImage]
+        ? [getImageUrl(article.coverImage)]
         : [],
       type: "article",
       publishedTime: article.publishedAt || undefined,
     },
   };
+}
+
+function getImageUrl(image: string | null): string {
+  if (!image) return "/images/news-placeholder.png";
+
+  if (/^https?:\/\//i.test(image)) return image;
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
+
+  return apiUrl
+    ? `${apiUrl}${image.startsWith("/") ? image : `/${image}`}`
+    : "/images/news-placeholder.png";
 }
 
 export default async function ArticleDetailPage({
@@ -143,7 +158,7 @@ export default async function ArticleDetailPage({
 
         {article.coverImage && (
           <img
-            src={article.coverImage}
+            src={getImageUrl(article.coverImage)}
             alt={article.title}
             className="mt-8 aspect-video w-full rounded-2xl object-cover"
           />

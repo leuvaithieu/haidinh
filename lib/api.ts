@@ -1,21 +1,32 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-console.log('API_URL:', API_URL);
-
 export async function apiFetch(
-  endpoint: string,
-  options?: RequestInit,
+    endpoint: string,
+    options?: RequestInit,
 ) {
-  const token = localStorage.getItem('access_token');
+    if (!API_URL) {
+        throw new Error('Chưa cấu hình NEXT_PUBLIC_API_URL');
+    }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: token ? `Bearer ${token}` : '',
-      ...options?.headers,
-    },
-  });
+    const token = localStorage.getItem('access_token');
+    const headers = new Headers(options?.headers);
 
-  return response;
+    // FormData phải để trình duyệt tự thiết lập Content-Type
+    // và boundary, không ép thành application/json.
+    const isFormData =
+        typeof FormData !== 'undefined' &&
+        options?.body instanceof FormData;
+
+    if (!isFormData && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+    }
+
+    if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    return fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+    });
 }

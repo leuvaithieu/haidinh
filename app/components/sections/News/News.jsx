@@ -11,13 +11,10 @@ async function getArticles() {
   }
 
   try {
-    const response = await fetch(
-      `${apiUrl}/public/articles?limit=3`,
-      {
-        next: { revalidate: 60 },
-      },
-    );
-
+    const response = await fetch(`${apiUrl}/public/articles?limit=3`,
+    {
+      cache: "no-store",
+    });
     if (!response.ok) {
       console.error("Không lấy được danh sách bài viết");
       return [];

@@ -1,10 +1,21 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
+
+function getImageUrl(image) {
+  if (!image) return "/images/news-placeholder.png";
+
+  if (/^https?:\/\//i.test(image)) return image;
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
+
+  return apiUrl
+    ? `${apiUrl}${image.startsWith("/") ? image : `/${image}`}`
+    : "/images/news-placeholder.png";
+}
+
 export default function NewsCard({ article }) {
-  const image =
-    article.coverImage ||
-    "/images/news-placeholder.png";
+  const image = getImageUrl(article.coverImage);
 
   const description = article.excerpt || "";
   const date = article.publishedAt

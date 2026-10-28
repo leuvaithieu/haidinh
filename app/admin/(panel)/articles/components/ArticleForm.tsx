@@ -183,7 +183,7 @@ export default function ArticleForm({
         return Object.keys(nextErrors).length === 0;
     }
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
         event.preventDefault();
 
         if (!validateForm()) return;
@@ -203,6 +203,10 @@ export default function ArticleForm({
                 .map((tag) => tag.trim())
                 .filter(Boolean),
             status,
+            publishedAt:
+                status === 'PUBLISHED'
+                    ? article?.publishedAt ?? new Date().toISOString()
+                    : undefined,
             featured,
             seoTitle: seoTitle.trim() || undefined,
             seoDescription: seoDescription.trim() || undefined,
@@ -362,10 +366,8 @@ export default function ArticleForm({
                                 src={
                                     coverImage.startsWith('http')
                                         ? coverImage
-                                        : `${process.env.NEXT_PUBLIC_API_URL}${coverImage}`
+                                        : `${process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '')}${coverImage.startsWith('/') ? coverImage : `/${coverImage}`}`
                                 }
-                                alt="Ảnh bìa bài viết"
-                                className="max-h-72 w-full object-contain"
                             />
                         </div>
 

@@ -55,6 +55,18 @@ async function getArticles(page: number): Promise<ArticleResponse> {
   return response.json();
 }
 
+function getImageUrl(image: string | null): string {
+  if (!image) return "/images/news-placeholder.png";
+
+  if (/^https?:\/\//i.test(image)) return image;
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
+
+  return apiUrl
+    ? `${apiUrl}${image.startsWith("/") ? image : `/${image}`}`
+    : "/images/news-placeholder.png";
+}
+
 export default async function NewsPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const parsedPage = Number(params.page ?? "1");
@@ -130,7 +142,7 @@ export default async function NewsPage({ searchParams }: PageProps) {
                       <div className="aspect-[16/10] overflow-hidden bg-gray-100">
                         {article.coverImage ? (
                           <img
-                            src={article.coverImage}
+                            src={getImageUrl(article.coverImage)}
                             alt={article.title}
                             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                           />

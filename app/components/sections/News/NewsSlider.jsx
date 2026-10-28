@@ -15,8 +15,9 @@ export default function NewsSlider({ articles }) {
       modules={[Navigation, Pagination, Autoplay]}
       spaceBetween={20}
       slidesPerView={1.1}
+      speed={2000}
       autoplay={{
-        delay: 5000,
+        delay: 4000,
         disableOnInteraction: false,
       }}
       pagination={{
@@ -34,6 +35,10 @@ export default function NewsSlider({ articles }) {
           slidesPerView: 3,
           spaceBetween: 24,
         },
+        1560: {
+          slidesPerView: 4,
+          spaceBetween: 24,
+        }
       }}
       className="news-swiper"
     >

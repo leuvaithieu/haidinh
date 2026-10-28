@@ -11,9 +11,9 @@ async function getArticles() {
   }
 
   try {
-    const response = await fetch(`${apiUrl}/public/articles?limit=3`,
+    const response = await fetch(`${apiUrl}/public/articles?limit=5`,
     {
-      cache: "no-store",
+      next: { revalidate: 60 },
     });
     if (!response.ok) {
       console.error("Không lấy được danh sách bài viết");

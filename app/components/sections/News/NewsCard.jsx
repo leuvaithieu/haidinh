@@ -1,6 +1,6 @@
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-
 
 function getImageUrl(image) {
   if (!image) return "/images/news-placeholder.png";
@@ -23,9 +23,13 @@ export default function NewsCard({ article }) {
     : "";
 
   return (
-    <article className="group overflow-hidden rounded-3xl bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
-      <Link href={`/tin-tuc/${article.slug}`}>
-        <div className="relative aspect-[16/10] overflow-hidden">
+    <article className="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+      <Link
+        href={`/tin-tuc/${article.slug}`}
+        className="flex h-full flex-col"
+      >
+        {/* Ảnh bìa có cùng tỷ lệ ở mọi card */}
+        <div className="relative aspect-[16/10] shrink-0 overflow-hidden">
           <img
             src={image}
             alt={article.title}
@@ -33,7 +37,8 @@ export default function NewsCard({ article }) {
           />
         </div>
 
-        <div className="p-6">
+        {/* Nội dung chiếm phần chiều cao còn lại */}
+        <div className="flex flex-1 flex-col p-6">
           {article.category && (
             <span className="text-primary text-xs font-semibold uppercase tracking-[0.2em]">
               {article.category}
@@ -48,12 +53,13 @@ export default function NewsCard({ article }) {
             {description}
           </p>
 
-          <div className="mt-6 flex items-center justify-between">
+          {/* Đẩy ngày và nút đọc tiếp xuống đáy */}
+          <div className="mt-auto flex items-center justify-between gap-3 pt-6">
             <span className="text-sm text-gray-400">
               {date}
             </span>
 
-            <span className="inline-flex items-center gap-2 text-sm font-semibold text-primary">
+            <span className="inline-flex shrink-0 items-center gap-2 text-sm font-semibold text-primary">
               Đọc tiếp
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </span>

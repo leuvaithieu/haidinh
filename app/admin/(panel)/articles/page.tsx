@@ -26,6 +26,16 @@ type ArticleListResponse = {
     };
 };
 
+function getImageUrl(image: string | null | undefined): string | null {
+    if (!image) return null;
+    if (/^https?:\/\//i.test(image)) return image;
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '');
+    if (!apiUrl) return image;
+
+    return `${apiUrl}${image.startsWith('/') ? image : `/${image}`}`;
+}
+
 export default function ArticlesPage() {
     const [articles, setArticles] = useState<Article[]>([]);
     const [search, setSearch] = useState('');
@@ -39,6 +49,7 @@ export default function ArticlesPage() {
 
     const [toast, setToast] = useState<ToastState>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [updatingFeaturedIds, setUpdatingFeaturedIds] = useState<Set<string>>(new Set());
 
     async function getArticles() {
         setIsLoading(true);
@@ -116,6 +127,54 @@ export default function ArticlesPage() {
     function handleFormCancel() {
         setIsFormOpen(false);
         setSelectedArticle(null);
+    }
+
+    async function toggleFeatured(article: Article) {
+        if (updatingFeaturedIds.has(article.id)) return;
+
+        setUpdatingFeaturedIds((previous) => new Set(previous).add(article.id));
+
+        try {
+            const response = await apiFetch(`/articles/${article.id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({ featured: !article.featured }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => null);
+                const message = Array.isArray(data?.message)
+                    ? data.message.join(', ')
+                    : data?.message;
+                setToast({
+                    message: message || 'Không thể cập nhật trạng thái nổi bật',
+                    type: 'error',
+                });
+                return;
+            }
+
+            setArticles((previous) => previous.map((item) =>
+                item.id === article.id
+                    ? { ...item, featured: !article.featured }
+                    : item,
+            ));
+            setToast({
+                message: article.featured
+                    ? 'Đã tắt bài viết nổi bật'
+                    : 'Đã bật bài viết nổi bật',
+                type: 'success',
+            });
+        } catch {
+            setToast({
+                message: 'Không thể kết nối đến máy chủ',
+                type: 'error',
+            });
+        } finally {
+            setUpdatingFeaturedIds((previous) => {
+                const next = new Set(previous);
+                next.delete(article.id);
+                return next;
+            });
+        }
     }
 
     async function confirmDeleteArticle() {
@@ -290,7 +349,20 @@ export default function ArticlesPage() {
                                         key={article.id}
                                         className="rounded-xl border border-slate-200 p-4"
                                     >
-                                        <div className="flex items-start justify-between gap-3">
+                                        <div className="flex items-start gap-3">
+                                            <div className="h-16 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                                                {getImageUrl(article.coverImage) ? (
+                                                    <img
+                                                        src={getImageUrl(article.coverImage)!}
+                                                        alt={`Ảnh bìa: ${article.title}`}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full items-center justify-center px-1 text-center text-[10px] text-slate-400">
+                                                        Chưa có ảnh
+                                                    </div>
+                                                )}
+                                            </div>
                                             <div className="min-w-0 flex-1">
                                                 <h3 className="break-words font-semibold text-slate-900">
                                                     {article.title}
@@ -318,7 +390,18 @@ export default function ArticlesPage() {
                                             </p>
                                         </div>
 
-                                        <div className="mt-4 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
+                                        <label className="mt-3 flex min-h-10 cursor-pointer items-center gap-2 text-sm text-slate-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={article.featured}
+                                                disabled={updatingFeaturedIds.has(article.id)}
+                                                onChange={() => void toggleFeatured(article)}
+                                                className="h-4 w-4 rounded border-slate-300 accent-red-600"
+                                            />
+                                            <span>{updatingFeaturedIds.has(article.id) ? 'Đang cập nhật...' : 'Bài viết nổi bật'}</span>
+                                        </label>
+
+                                        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-100 pt-3">
                                             <button
                                                 type="button"
                                                 onClick={() => handleEdit(article)}
@@ -369,12 +452,39 @@ export default function ArticlesPage() {
                                                 className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
                                             >
                                                 <td className="px-4 py-4">
-                                                    <p className="font-medium text-slate-900">
-                                                        {article.title}
-                                                    </p>
-                                                    <p className="mt-1 max-w-xs truncate text-xs text-slate-500">
-                                                        /{article.slug}
-                                                    </p>
+                                                    <div className="flex min-w-0 items-center gap-3">
+                                                        <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                                                            {getImageUrl(article.coverImage) ? (
+                                                                <img
+                                                                    src={getImageUrl(article.coverImage)!}
+                                                                    alt={`Ảnh bìa: ${article.title}`}
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="flex h-full items-center justify-center px-1 text-center text-[10px] text-slate-400">
+                                                                    Chưa có ảnh
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="font-medium text-slate-900">
+                                                                {article.title}
+                                                            </p>
+                                                            <p className="mt-1 max-w-xs truncate text-xs text-slate-500">
+                                                                /{article.slug}
+                                                            </p>
+                                                            <label className="mt-2 inline-flex cursor-pointer items-center gap-2 text-xs text-slate-600">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={article.featured}
+                                                                    disabled={updatingFeaturedIds.has(article.id)}
+                                                                    onChange={() => void toggleFeatured(article)}
+                                                                    className="h-4 w-4 rounded border-slate-300 accent-red-600"
+                                                                />
+                                                                <span>{updatingFeaturedIds.has(article.id) ? 'Đang cập nhật...' : 'Nổi bật'}</span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
                                                 </td>
 
                                                 <td className="px-4 py-4 text-slate-600">

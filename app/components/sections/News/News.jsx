@@ -1,8 +1,40 @@
+import Link from "next/link";
 import Container from "@/app/components/layout/Containers";
-
 import NewsSlider from "./NewsSlider";
 
-export default function News() {
+async function getArticles() {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!apiUrl) {
+    console.error("Chưa cấu hình NEXT_PUBLIC_API_URL");
+    return [];
+  }
+
+  try {
+    const response = await fetch(
+      `${apiUrl}/public/articles?limit=3`,
+      {
+        next: { revalidate: 60 },
+      },
+    );
+
+    if (!response.ok) {
+      console.error("Không lấy được danh sách bài viết");
+      return [];
+    }
+
+    const result = await response.json();
+
+    return result.items ?? [];
+  } catch (error) {
+    console.error("Lỗi kết nối API bài viết:", error);
+    return [];
+  }
+}
+
+export default async function News() {
+  const articles = await getArticles();
+
   return (
     <section className="bg-white py-16 lg:py-24">
       <Container>
@@ -22,44 +54,29 @@ export default function News() {
             </p>
           </div>
 
-          <button
-            className="
-            hidden
-            rounded-full
-            border
-            border-primary
-            px-6
-            py-3
-            text-sm
-            font-semibold
-            text-primary
-            transition-all
-            hover:bg-primary
-            hover:text-white
-            lg:block
-            "
+          <Link
+            href="/tin-tuc"
+            className="hidden rounded-full border border-primary px-6 py-3 text-sm font-semibold text-primary transition-all hover:bg-primary hover:text-white lg:block"
           >
             Xem tất cả
-          </button>
+          </Link>
         </div>
 
-        <NewsSlider />
+        {articles.length > 0 ? (
+          <NewsSlider articles={articles} />
+        ) : (
+          <p className="py-10 text-center text-gray-500">
+            Hiện chưa có bài viết được xuất bản.
+          </p>
+        )}
 
         <div className="mt-10 flex justify-center lg:hidden">
-          <button
-            className="
-            rounded-full
-            border
-            border-primary
-            px-6
-            py-3
-            text-sm
-            font-semibold
-            text-primary
-            "
+          <Link
+            href="/tin-tuc"
+            className="rounded-full border border-primary px-6 py-3 text-sm font-semibold text-primary"
           >
             Xem tất cả
-          </button>
+          </Link>
         </div>
       </Container>
     </section>

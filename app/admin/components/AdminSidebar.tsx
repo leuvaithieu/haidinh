@@ -127,7 +127,7 @@ const menuGroups = [
         label: 'Sản phẩm & Dịch vụ',
         href: '/admin/products',
         icon: Package,
-        enabled: false,
+        enabled: true,
       },
     ],
   },

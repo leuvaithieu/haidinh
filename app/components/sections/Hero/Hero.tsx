@@ -1,38 +1,32 @@
+
+import Image from "next/image";
 import Container from "@/app/components/layout/Containers";
 import HeroContent from "./HeroContent";
 
-import Image from "next/image";
 import heroImage from "@/app/assets/images/hero/banner-hero-mobile.png";
-
-
 
 export default function Hero() {
   return (
-    <section className="relative min-h-[420px] overflow-hidden mt-18">
-      {/* Background */}
+    <section className="relative isolate mt-16 min-h-[460px] overflow-hidden bg-neutral-950 sm:min-h-[520px] lg:mt-20 lg:min-h-[600px]">
+      {/* Background image */}
       <Image
         src={heroImage}
         alt="Xe khách Hải Định"
         fill
         priority
-        loading="eager"
-        fetchPriority="high"
-        className="absolute inset-0 h-full w-full object-cover "
+        sizes="100vw"
+        className="object-cover object-center"
       />
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/20" />
+      {/* Dark overlay for text readability */}
+      <div className="absolute inset-0 bg-black/35" />
 
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(0,0,0,.72) 0%, rgba(0,0,0,.55) 30%, rgba(0,0,0,.20) 60%, transparent 100%)",
-        }}
-      />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/10" />
 
-      {/* Content */}
-      <div className="relative z-10">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-black/10" />
+
+      {/* Hero content */}
+      <div className="relative z-10 flex min-h-[460px] items-center py-12 sm:min-h-[520px] sm:py-16 lg:min-h-[600px] lg:py-20">
         <Container>
           <HeroContent />
         </Container>

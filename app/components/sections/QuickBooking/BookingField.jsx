@@ -5,28 +5,26 @@ export default function BookingField({
   children,
 }) {
   return (
-    <div className="group flex h-14 items-center gap-3 rounded-xl border border-gray-200 bg-white mx-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 lg:h-[72px] lg:gap-4 lg:rounded-2xl lg:px-5">
-      {/* Icon */}
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary lg:h-10 lg:w-10">
-        {icon}
-      </div>
-
-      {/* Content */}
-      <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-medium text-gray-500 lg:text-xs">
-          {label}
-        </p>
-
-        {children ? (
-          children
-        ) : (
-          <input
-            type="text"
-            placeholder={placeholder}
-            className="mt-1 w-full border-none bg-transparent text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400"
-          />
+    <div className="flex min-h-[72px] min-w-0 flex-col justify-center rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition focus-within:border-primary focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/10">
+      <label className="flex min-w-0 items-center gap-2 text-xs font-semibold text-gray-500 sm:text-sm">
+        {icon && (
+          <span className="shrink-0 text-primary">
+            {icon}
+          </span>
         )}
-      </div>
+
+        <span className="truncate">{label}</span>
+      </label>
+
+      {children ? (
+        <div className="mt-1 min-w-0">{children}</div>
+      ) : (
+        <input
+          type="text"
+          placeholder={placeholder}
+          className="mt-1 w-full min-w-0 border-0 bg-transparent p-0 text-sm font-semibold text-gray-800 outline-none placeholder:font-normal placeholder:text-gray-400 focus:ring-0"
+        />
+      )}
     </div>
   );
 }

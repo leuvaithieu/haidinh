@@ -8,47 +8,47 @@ export default function Footer() {
   return (
     <footer className="bg-neutral-950 text-white">
       <Container>
-        <div className="py-16">
-          {/* Top */}
-          <div className="flex flex-col items-center text-center">
-            {/* Logo */}
-            <h2 className="text-3xl font-bold tracking-wide">
+        <div className="py-10 sm:py-14 lg:py-16">
+          {/* Phần giới thiệu */}
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-2xl font-bold tracking-wider sm:text-3xl">
               HẢI ĐỊNH
             </h2>
 
-            {/* Slogan */}
-            <p className="mt-5 max-w-2xl text-base leading-8 text-neutral-400">
+            <p className="mt-4 text-sm leading-7 text-neutral-400 sm:text-base sm:leading-8">
               Hơn 25 năm phục vụ vận tải hành khách từ năm 2000.
-              Hải Định luôn đồng hành cùng khách hàng trên mọi hành
-              trình với sự an toàn, đúng giờ và tận tâm.
+              Hải Định luôn đồng hành cùng khách hàng trên mọi
+              hành trình với sự an toàn, đúng giờ và tận tâm.
             </p>
           </div>
 
-          {/* Divider */}
-          <div className="my-14 h-px bg-white/10" />
+          <div className="my-8 h-px bg-white/10 sm:my-12 lg:my-14" />
 
-          {/* Main */}
-          <div className="grid gap-10 lg:grid-cols-[360px_1fr_1fr]">
-            <FooterInfo />
+          {/* Thông tin liên hệ, bản đồ và fanpage */}
+          <div className="grid grid-cols-1 gap-10 sm:gap-12 lg:grid-cols-3 lg:gap-8">
+            <div className="min-w-0">
+              <FooterInfo />
+            </div>
 
-            <FooterMap />
+            <div className="min-w-0">
+              <FooterMap />
+            </div>
 
-            <FooterFanpage />
+            <div className="min-w-0">
+              <FooterFanpage />
+            </div>
           </div>
 
-          {/* Divider */}
-          <div className="my-12 h-px bg-white/10" />
+          <div className="my-8 h-px bg-white/10 sm:my-10" />
 
-          {/* Bottom */}
-          <div className="flex flex-col items-center justify-between gap-3 text-sm text-neutral-500 lg:flex-row">
+          {/* Bản quyền */}
+          <div className="flex flex-col items-center gap-3 text-center text-xs leading-6 text-neutral-500 sm:text-sm lg:flex-row lg:justify-between lg:text-left">
             <p>
               © {new Date().getFullYear()} Công ty TNHH Hải Định.
               All rights reserved.
             </p>
 
-            <p>
-              Designed & Developed by Hải Định
-            </p>
+            <p>Designed & Developed by Hải Định</p>
           </div>
         </div>
       </Container>

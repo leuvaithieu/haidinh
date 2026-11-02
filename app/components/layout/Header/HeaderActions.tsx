@@ -11,9 +11,16 @@ export default function HeaderActions({
   onToggle,
 }: HeaderActionsProps) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex shrink-0 items-center gap-2 sm:gap-3">
       <HotlineButton />
-      <MenuButton open={open} onClick={onToggle} />
+
+      {/* Hamburger chỉ hiển thị trên mobile/tablet */}
+      <div className="lg:hidden">
+        <MenuButton
+          open={open}
+          onClick={onToggle}
+        />
+      </div>
     </div>
   );
 }

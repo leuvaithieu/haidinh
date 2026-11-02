@@ -1,97 +1,68 @@
-import Link from "next/link";
-import {
-  MapPin,
-  Phone,
-  Mail,
-  Clock3,
-} from "lucide-react";
-
-import { companyInfo } from "./data";
+import { MapPin, Phone, Mail, Clock3 } from "lucide-react";
+import { contactInfo } from "./data";
 
 export default function FooterInfo() {
   return (
-    <div>
-      <h3 className="text-lg font-semibold text-white">
-        Liên hệ
-      </h3>
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-lg font-bold text-white">
+          {contactInfo.name}
+        </h3>
 
-      <div className="mt-6 space-y-6">
-        {/* Address */}
-        <div className="flex items-start gap-4">
-          <div className="mt-1 text-primary">
-            <MapPin size={20} />
-          </div>
+        <p className="mt-2 text-sm leading-6 text-gray-300">
+          {contactInfo.slogan}
+        </p>
+      </div>
 
-          <div>
-            <p className="text-sm font-medium text-white">
-              Địa chỉ
-            </p>
+      <div className="space-y-3 text-sm text-gray-300">
+        {/* Địa chỉ */}
+        <div className="flex items-start gap-3">
+          <MapPin className="mt-1 h-5 w-5 shrink-0 text-red-500" />
 
-            <Link
-              href={companyInfo.map}
-              target="_blank"
-              className="mt-1 block leading-7 text-neutral-400 transition hover:text-white"
-            >
-              {companyInfo.address}
-            </Link>
-          </div>
+          <a
+            href={contactInfo.map}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-colors hover:text-white"
+          >
+            {contactInfo.address}
+          </a>
         </div>
 
-        {/* Hotline */}
-        <div className="flex items-start gap-4">
-          <div className="mt-1 text-primary">
-            <Phone size={20} />
-          </div>
+        {/* Danh sách số điện thoại */}
+        <div className="flex items-start gap-3">
+          <Phone className="mt-1 h-5 w-5 shrink-0 text-red-500" />
 
-          <div>
-            <p className="text-sm font-medium text-white">
-              Hotline
-            </p>
-
-            <Link
-              href={`tel:${companyInfo.phone}`}
-              className="mt-1 block text-neutral-400 transition hover:text-white"
-            >
-              {companyInfo.phone}
-            </Link>
+          <div className="flex flex-col gap-2">
+            {contactInfo.phones.map((phone) => (
+              <a
+                key={phone}
+                href={`tel:${phone.replace(/[^\d+]/g, "")}`}
+                className="transition-colors hover:text-white"
+              >
+                {phone}
+              </a>
+            ))}
           </div>
         </div>
 
         {/* Email */}
-        <div className="flex items-start gap-4">
-          <div className="mt-1 text-primary">
-            <Mail size={20} />
-          </div>
+        <div className="flex items-start gap-3">
+          <Mail className="mt-1 h-5 w-5 shrink-0 text-red-500" />
 
-          <div>
-            <p className="text-sm font-medium text-white">
-              Email
-            </p>
-
-            <Link
-              href={`mailto:${companyInfo.email}`}
-              className="mt-1 block text-neutral-400 transition hover:text-white"
-            >
-              {companyInfo.email}
-            </Link>
-          </div>
+          <a
+            href={`mailto:${contactInfo.email}`}
+            className="break-all transition-colors hover:text-white"
+          >
+            {contactInfo.email}
+          </a>
         </div>
 
-        {/* Working Time */}
-        <div className="flex items-start gap-4">
-          <div className="mt-1 text-primary">
-            <Clock3 size={20} />
-          </div>
+        {/* Giờ hoạt động */}
+        <div className="flex items-start gap-3">
+          <Clock3 className="mt-1 h-5 w-5 shrink-0 text-red-500" />
 
-          <div>
-            <p className="text-sm font-medium text-white">
-              Giờ làm việc
-            </p>
-
-            <p className="mt-1 text-neutral-400">
-              {companyInfo.workingTime}
-            </p>
-          </div>
+          <span>{contactInfo.workingTime}</span>
         </div>
       </div>
     </div>

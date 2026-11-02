@@ -7,6 +7,8 @@ import {
   Info,
 } from "lucide-react";
 
+export const HOTLINE = "0982561204";
+
 export const NAV_ITEMS = [
   {
     title: "Trang chủ",

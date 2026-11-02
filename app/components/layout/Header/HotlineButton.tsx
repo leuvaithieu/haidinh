@@ -1,26 +1,32 @@
 import Link from "next/link";
 import { Phone } from "lucide-react";
+import { HOTLINE } from "./header.data";
 
 export default function HotlineButton() {
+  const phoneHref = HOTLINE.replace(/[^\d+]/g, "");
+
   return (
     <Link
-      href="tel:0982561204"
+      href={`tel:${phoneHref}`}
+      aria-label={`Gọi hotline ${HOTLINE}`}
       className="
-        flex items-center gap-2
-        rounded-full
-        bg-yellow-400
-        px-4 py-2
-        text-sm
-        font-semibold
-        text-black
-        transition-all
-        duration-200
-        hover:scale-105
-        hover:bg-yellow-300
+        inline-flex min-h-11 shrink-0 items-center justify-center gap-2
+        rounded-full bg-red-600 px-3
+        text-sm font-semibold text-white
+        transition-colors duration-200
+        hover:bg-red-700
+        focus-visible:outline-none
+        focus-visible:ring-2 focus-visible:ring-red-500
+        focus-visible:ring-offset-2
+        sm:px-4
       "
     >
-      <Phone size={16} />
-      <span>0982561204</span>
+      <Phone size={17} aria-hidden="true" />
+
+      <span className="whitespace-nowrap">
+        <span className="sm:hidden">Hotline</span>
+        <span className="hidden sm:inline">{HOTLINE}</span>
+      </span>
     </Link>
   );
 }

@@ -1,26 +1,28 @@
 import { Check } from "lucide-react";
-
 import { features } from "./data";
 
 export default function WhyChooseContent() {
   return (
-    <div className="max-w-xl">
+    <div className="w-full max-w-xl">
       {/* Badge */}
-      <span className="text-primary text-xs font-semibold uppercase tracking-[0.25em]">
-        TỪ NĂM 2000
+      <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary sm:tracking-[0.25em]">
+        <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+        Từ năm 2000
       </span>
 
       {/* Heading */}
-      <h2 className="mt-4 text-3xl font-bold leading-tight text-gray-900 lg:text-5xl">
+      <h2 className="mt-3 text-3xl font-extrabold leading-[1.12] tracking-tight text-gray-900 sm:mt-4 sm:text-4xl lg:text-5xl">
         Hơn 25 năm
         <br />
         đồng hành trên
-        <br />
-        mọi hành trình
+        <br className="hidden sm:block" />
+        <span className="text-primary sm:ml-2">
+          mọi hành trình
+        </span>
       </h2>
 
       {/* Description */}
-      <p className="mt-6 text-base leading-8 text-gray-600">
+      <p className="mt-4 text-sm leading-6 text-gray-600 sm:mt-6 sm:text-base sm:leading-8">
         Với hơn 25 năm kinh nghiệm trong lĩnh vực vận tải hành khách,
         Hải Định không ngừng nâng cao chất lượng dịch vụ, đầu tư đội xe
         hiện đại và xây dựng đội ngũ tài xế chuyên nghiệp. Mỗi chuyến đi
@@ -28,22 +30,22 @@ export default function WhyChooseContent() {
       </p>
 
       {/* Features */}
-      <div className="mt-10 space-y-5">
+      <ul className="mt-6 space-y-3 sm:mt-8 sm:space-y-4 lg:mt-10 lg:space-y-5">
         {features.map((feature) => (
-          <div
+          <li
             key={feature}
-            className="flex items-center gap-4"
+            className="flex min-w-0 items-start gap-3 sm:gap-4"
           >
-            <div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
-              <Check className="text-primary h-5 w-5" />
-            </div>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 sm:h-10 sm:w-10">
+              <Check className="h-5 w-5 text-primary" />
+            </span>
 
-            <span className="text-base font-medium text-gray-800">
+            <span className="min-w-0 pt-1 text-sm font-medium leading-6 text-gray-800 sm:text-base sm:leading-7">
               {feature}
             </span>
-          </div>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }

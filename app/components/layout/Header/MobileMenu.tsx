@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { X, House, Bus, MapPinned, BadgeDollarSign, Phone } from "lucide-react";
+import { X, Phone } from "lucide-react";
+import { NAV_ITEMS } from "./header.data";
 
 interface MobileMenuProps {
   open: boolean;
@@ -14,94 +15,96 @@ export default function MobileMenu({
 }: MobileMenuProps) {
   return (
     <>
-      {/* Overlay */}
-      <div
+      {/* Lớp nền */}
+      <button
+        type="button"
+        aria-label="Đóng menu"
+        tabIndex={open ? 0 : -1}
         onClick={onClose}
-        className={`
-          fixed inset-0 z-40 bg-black/40 transition-opacity duration-300
-          ${open ? "opacity-100 visible" : "opacity-0 invisible"}
-        `}
+        className={`fixed inset-0 z-40 bg-black/40 transition-opacity duration-300 lg:hidden ${
+          open
+            ? "visible opacity-100"
+            : "invisible opacity-0"
+        }`}
       />
 
-      {/* Drawer */}
+      {/* Menu trượt */}
       <aside
-        className={`
-          fixed top-0 left-0 z-50 h-screen w-[85%] max-w-sm
-          bg-white shadow-2xl
-          transition-transform duration-300
-          ${open ? "translate-x-0" : "-translate-x-full"}
-        `}
+        id="mobile-menu"
+        aria-label="Menu điều hướng"
+        aria-hidden={!open}
+        className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-[85%] max-w-sm flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out lg:hidden ${
+          open
+            ? "translate-x-0"
+            : "-translate-x-full"
+        }`}
       >
-        <div className="flex h-[72px] items-center justify-between border-b px-4">
-          <div className="leading-none">
-            <h1 className="text-xl font-black tracking-wide text-red-600">
+        {/* Đầu menu */}
+        <div className="flex h-[72px] shrink-0 items-center justify-between border-b border-gray-100 px-5">
+          <div>
+            <p className="text-xl font-black tracking-wide text-red-600">
               HẢI ĐỊNH
-            </h1>
+            </p>
 
-            <p className="text-[11px] text-neutral-500">
+            <p className="mt-1 text-[11px] text-neutral-500">
               Chất lượng tạo niềm tin
             </p>
           </div>
-          {/* <button onClick={onClose}>
-            <X size={26} />
-          </button> */}
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Đóng menu"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-neutral-700 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+          >
+            <X size={24} aria-hidden="true" />
+          </button>
         </div>
 
-        <nav className="flex flex-col px-5 py-6">
+        {/* Các mục menu lấy từ dữ liệu dùng chung */}
+        <nav
+          aria-label="Điều hướng trên điện thoại"
+          className="flex-1 overflow-y-auto px-4 py-5"
+        >
+          <ul className="space-y-1">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
 
-          <MenuItem icon={<House size={20} />} href="/">
-            Trang chủ
-          </MenuItem>
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={onClose}
+                    tabIndex={open ? 0 : -1}
+                    className="flex min-h-12 items-center gap-3 rounded-xl px-4 py-3 text-base font-medium text-neutral-700 transition hover:bg-red-50 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                  >
+                    <Icon
+                      size={21}
+                      className="shrink-0"
+                      aria-hidden="true"
+                    />
 
-          <MenuItem icon={<Bus size={20} />} href="/dat-ve">
-            Đặt vé
-          </MenuItem>
-
-          <MenuItem icon={<MapPinned size={20} />} href="/lich-trinh">
-            Lịch trình
-          </MenuItem>
-
-          <MenuItem icon={<BadgeDollarSign size={20} />} href="/gia-ve">
-            Giá vé
-          </MenuItem>
-
-          <MenuItem icon={<Phone size={20} />} href="/lien-he">
-            Liên hệ
-          </MenuItem>
-
+                    <span>{item.title}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         </nav>
 
-        <div className="absolute bottom-8 left-5 right-5">
-          <Link
+        {/* Hotline */}
+        <div className="shrink-0 border-t border-gray-100 p-5">
+          <a
             href="tel:19006079"
-            className="flex items-center justify-center rounded-full bg-red-600 py-3 font-semibold text-white"
+            onClick={onClose}
+            tabIndex={open ? 0 : -1}
+            className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-red-600 px-4 py-3 font-semibold text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
           >
+            <Phone size={18} aria-hidden="true" />
             Gọi ngay 1900 6079
-          </Link>
+          </a>
         </div>
       </aside>
     </>
-  );
-}
-
-interface MenuItemProps {
-  href: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}
-
-function MenuItem({
-  href,
-  icon,
-  children,
-}: MenuItemProps) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-3 rounded-xl px-3 py-4 text-lg font-medium transition hover:bg-red-50 hover:text-red-600"
-    >
-      {icon}
-      {children}
-    </Link>
   );
 }

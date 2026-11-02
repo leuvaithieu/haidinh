@@ -1,13 +1,19 @@
+import Link from "next/link";
+
 export default function Logo() {
   return (
-    <div className="leading-none">
-      <h1 className="text-xl font-black tracking-wide text-red-600">
+    <Link
+      href="/"
+      aria-label="Hải Định - Trang chủ"
+      className="group inline-flex min-w-0 flex-col justify-center leading-none"
+    >
+      <span className="whitespace-nowrap text-xl font-black tracking-wide text-red-600 transition-colors group-hover:text-red-700 sm:text-2xl">
         HẢI ĐỊNH
-      </h1>
+      </span>
 
-      <p className="text-[11px] text-neutral-500">
+      <span className="mt-1 whitespace-nowrap text-[10px] font-medium text-neutral-500 sm:text-[11px]">
         Chất lượng tạo niềm tin
-      </p>
-    </div>
+      </span>
+    </Link>
   );
 }

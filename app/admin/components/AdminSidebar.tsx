@@ -87,7 +87,7 @@ const menuGroups = [
         label: 'Vé và đặt chỗ',
         href: '/admin/bookings',
         icon: Ticket,
-        enabled: false,
+        enabled: true,
       },
       {
         label: 'Hóa đơn',

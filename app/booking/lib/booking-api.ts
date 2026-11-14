@@ -336,3 +336,33 @@ export async function lookupPublicBooking(
     return data;
 }
 
+export type PublicBankInfo = {
+    bankName: string;
+    bankCode: string;
+    accountNumber: string;
+    accountName: string;
+};
+
+// Lấy thông tin tài khoản ngân hàng công khai để khách chuyển khoản.
+export async function getPublicBankInfo(): Promise<PublicBankInfo> {
+    const response = await apiFetch('/payments/bank-info');
+
+    if (!response.ok) {
+        throw new Error(
+            await getApiErrorMessage(
+                response,
+                'Không thể tải thông tin tài khoản ngân hàng.',
+            ),
+        );
+    }
+
+    const data: PublicBankInfo = await response.json();
+
+    if (!data.bankCode || !data.accountNumber || !data.accountName) {
+        throw new Error(
+            'Thông tin tài khoản ngân hàng chưa được cấu hình đầy đủ.',
+        );
+    }
+
+    return data;
+}

@@ -1,12 +1,14 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 
 import {
     lookupPublicBooking,
     reportBookingPayment,
+    getPublicBankInfo,
+    type PublicBankInfo,
     type PublicBookingLookupResponse,
 } from '@/app/booking/lib/booking-api';
 
@@ -47,6 +49,10 @@ export default function BookingPaymentPage() {
     const [booking, setBooking] =
         useState<PublicBookingLookupResponse | null>(null);
 
+    const [bankInfo, setBankInfo] = useState<PublicBankInfo | null>(null);
+    const [loadingBankInfo, setLoadingBankInfo] = useState(true);
+    const [bankInfoError, setBankInfoError] = useState('');
+
     const [amount, setAmount] = useState('');
     const [transactionCode, setTransactionCode] = useState('');
     const [transferContent, setTransferContent] = useState(
@@ -72,6 +78,29 @@ export default function BookingPaymentPage() {
         ? booking?.depositAmount ?? 0
         : 1;
 
+    const enteredAmount = Number(amount);
+
+const qrAmount =
+    Number.isInteger(enteredAmount) &&
+    enteredAmount >= minimumAmount &&
+    enteredAmount <= remainingAmount
+        ? enteredAmount
+        : isInitialPayment
+            ? minimumAmount
+            : remainingAmount;
+
+    const qrImageUrl = bankInfo
+        ? `https://img.vietqr.io/image/${encodeURIComponent(
+            bankInfo.bankCode,
+        )}-${encodeURIComponent(bankInfo.accountNumber)}-qr_only.png?${new URLSearchParams(
+            {
+                amount: String(qrAmount),
+                addInfo: transferContent,
+                accountName: bankInfo.accountName,
+            },
+        ).toString()}`
+        : '';
+
     const isHoldExpired =
         isInitialPayment &&
         (
@@ -84,6 +113,37 @@ export default function BookingPaymentPage() {
         !isHoldExpired &&
         (isInitialPayment || isAdditionalPayment) &&
         remainingAmount > 0;
+
+    // Tải thông tin tài khoản ngân hàng công khai khi khách mở trang thanh toán.
+    useEffect(() => {
+        let isMounted = true;
+
+        getPublicBankInfo()
+            .then((data) => {
+                if (isMounted) {
+                    setBankInfo(data);
+                    setBankInfoError('');
+                }
+            })
+            .catch((err) => {
+                if (isMounted) {
+                    setBankInfoError(
+                        err instanceof Error
+                            ? err.message
+                            : 'Không thể tải thông tin ngân hàng.',
+                    );
+                }
+            })
+            .finally(() => {
+                if (isMounted) {
+                    setLoadingBankInfo(false);
+                }
+            });
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     // Tra cứu booking bằng mã đặt vé và số điện thoại người đặt.
     async function handleLookup(event: React.FormEvent<HTMLFormElement>) {
@@ -377,20 +437,70 @@ export default function BookingPaymentPage() {
                                     <h2 className="font-bold text-amber-900">
                                         Hướng dẫn chuyển khoản
                                     </h2>
-                                    <p className="mt-2 text-sm leading-6 text-amber-900">
-                                        Vui lòng liên hệ nhân viên Hải Định để
-                                        nhận thông tin tài khoản ngân hàng chính
-                                        thức trước khi chuyển tiền.
-                                    </p>
+
+                                    {loadingBankInfo ? (
+                                        <p className="mt-3 text-sm text-gray-600">
+                                            Đang tải thông tin ngân hàng...
+                                        </p>
+                                    ) : bankInfo ? (
+                                        <>
+                                            <div className="mt-4 rounded-xl border border-amber-200 bg-white p-4">
+                                                <p className="text-xs text-gray-500">Ngân hàng</p>
+                                                <p className="mt-1 font-semibold text-gray-900">
+                                                    {bankInfo.bankName}
+                                                </p>
+
+                                                <p className="mt-3 text-xs text-gray-500">
+                                                    Số tài khoản
+                                                </p>
+                                                <p className="mt-1 text-lg font-bold tracking-wide text-gray-900">
+                                                    {bankInfo.accountNumber}
+                                                </p>
+
+                                                <p className="mt-3 text-xs text-gray-500">
+                                                    Chủ tài khoản
+                                                </p>
+                                                <p className="mt-1 font-semibold text-gray-900">
+                                                    {bankInfo.accountName}
+                                                </p>
+                                            </div>
+
+                                            <div className="mt-4 rounded-xl border border-amber-200 bg-white p-4 text-center">
+                                                <p className="font-semibold text-gray-900">
+                                                    Quét mã QR để chuyển khoản
+                                                </p>
+
+                                                <p className="mt-2 text-sm text-gray-600">
+                                                    Số tiền: {formatCurrency(qrAmount)}
+                                                </p>
+
+                                                <img
+                                                    src={qrImageUrl}
+                                                    alt="Mã QR thanh toán Hải Định"
+                                                    className="mx-auto mt-3 h-64 w-64 max-w-full object-contain"
+                                                />
+
+                                                <p className="mt-2 text-xs text-gray-500">
+                                                    Kiểm tra đúng số tiền và nội dung trước khi xác nhận chuyển khoản.
+                                                </p>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className="mt-3 text-sm text-red-700">
+                                            {bankInfoError || 'Không thể tải thông tin ngân hàng. Vui lòng liên hệ Hải Định.'}
+                                        </p>
+                                    )}
 
                                     <div className="mt-4 rounded-xl border border-amber-200 bg-white p-4">
                                         <p className="text-xs text-gray-500">
                                             Nội dung chuyển khoản
                                         </p>
+
                                         <div className="mt-2 flex items-center gap-2">
                                             <p className="min-w-0 flex-1 break-all text-sm font-bold text-gray-900">
                                                 {transferContent}
                                             </p>
+
                                             <button
                                                 type="button"
                                                 onClick={handleCopyContent}

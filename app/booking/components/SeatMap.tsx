@@ -63,8 +63,13 @@ export default function SeatMap({
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <span className="h-4 w-4 rounded border border-gray-300 bg-gray-200" />
-                    Đã có khách
+                    <span className="h-4 w-4 rounded border border-orange-600 bg-orange-400" />
+                    Đang giữ
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="h-4 w-4 rounded border border-gray-400 bg-gray-300" />
+                    Đã thanh toán
                 </div>
             </div>
 
@@ -133,20 +138,20 @@ export default function SeatMap({
                                                     }}
                                                 >
                                                     {rowSeats.map((seat) => {
-                                                        const isSelected =
-                                                            selectedSeatIds.includes(seat.id);
+                                                        const isSelected = selectedSeatIds.includes(seat.id);
                                                         const isAvailable = seat.isAvailable;
                                                         const seatLabel = seat.label || seat.code;
 
-                                                        let seatClass =
-                                                            'border-gray-300 bg-white text-gray-700 hover:border-red-400 hover:bg-red-50';
+                                                        let seatColor = 'fill-white stroke-gray-400';
 
-                                                        if (!isAvailable) {
-                                                            seatClass =
-                                                                'cursor-not-allowed border-gray-200 bg-gray-200 text-gray-400';
+                                                        if (seat.status === 'HELD') {
+                                                            seatColor = 'fill-orange-400 stroke-orange-600';
+                                                        } else if (seat.status === 'BOOKED') {
+                                                            seatColor = 'fill-gray-300 stroke-gray-400';
+                                                        } else if (seat.status === 'UNAVAILABLE') {
+                                                            seatColor = 'fill-gray-200 stroke-gray-400';
                                                         } else if (isSelected) {
-                                                            seatClass =
-                                                                'border-red-600 bg-red-600 text-white shadow-sm';
+                                                            seatColor = 'fill-red-600 stroke-red-700';
                                                         }
 
                                                         return (
@@ -155,14 +160,65 @@ export default function SeatMap({
                                                                 type="button"
                                                                 disabled={!isAvailable}
                                                                 aria-pressed={isSelected}
-                                                                aria-label={`Ghế ${seatLabel}${!isAvailable ? ', đã có khách' : isSelected ? ', đang chọn' : ', còn trống'}`}
+                                                                aria-label={`Ghế ${seatLabel}${!isAvailable ? ', đang được giữ hoặc đã bán' : isSelected ? ', đang chọn' : ', còn trống'}`}
                                                                 onClick={() => onToggleSeat(seat.id)}
-                                                                className={`flex min-h-12 min-w-0 items-center justify-center rounded-lg border px-1 py-2 text-xs font-semibold transition sm:min-h-14 sm:text-sm ${seatClass}`}
+                                                                className="flex min-w-0 flex-col items-center gap-1 disabled:cursor-not-allowed"
                                                             >
-                                                                <span className="truncate">{seatLabel}</span>
+                                                                <span className="text-xs font-semibold text-gray-700">
+                                                                    {seatLabel}
+                                                                </span>
+
+                                                                <svg
+                                                                    viewBox="0 0 64 64"
+                                                                    className="h-12 w-12 sm:h-14 sm:w-14"
+                                                                    xmlns="http://www.w3.org/2000/svg"
+                                                                >
+                                                                    {/* Tựa lưng ghế */}
+                                                                    <rect
+                                                                        x="14"
+                                                                        y="3"
+                                                                        width="36"
+                                                                        height="17"
+                                                                        rx="5"
+                                                                        className={seatColor}
+                                                                        strokeWidth="2"
+                                                                    />
+
+                                                                    {/* Mặt ghế */}
+                                                                    <rect
+                                                                        x="9"
+                                                                        y="23"
+                                                                        width="46"
+                                                                        height="34"
+                                                                        rx="7"
+                                                                        className={seatColor}
+                                                                        strokeWidth="2"
+                                                                    />
+
+                                                                    {/* Số ghế */}
+                                                                    <text
+                                                                        x="32"
+                                                                        y="44"
+                                                                        textAnchor="middle"
+                                                                        fontSize="13"
+                                                                        fontWeight="bold"
+                                                                        className={
+                                                                            isSelected
+                                                                                ? 'fill-white'
+                                                                                : seat.status === 'HELD'
+                                                                                    ? 'fill-orange-950'
+                                                                                    : seat.status === 'BOOKED'
+                                                                                        ? 'fill-gray-600'
+                                                                                        : 'fill-gray-700'
+                                                                        }
+                                                                    >
+                                                                        {seat.code}
+                                                                    </text>
+                                                                </svg>
                                                             </button>
                                                         );
                                                     })}
+
                                                 </div>
                                             );
                                         })}

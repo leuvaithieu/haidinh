@@ -78,6 +78,7 @@ export type PublicTripSeat = {
     row: number;
     column: number;
     isAvailable: boolean;
+    status: 'AVAILABLE' | 'HELD' | 'BOOKED' | 'UNAVAILABLE';
 };
 
 export type PublicTripSeatsResponse = {

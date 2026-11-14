@@ -341,7 +341,7 @@ export default function AddVehicleForm({
                         </option>
 
                         <option value="38">
-                            38 chỗ
+                            34 chỗ
                         </option>
 
                         <option value="44">
@@ -380,19 +380,19 @@ export default function AddVehicleForm({
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-100"
                     >
                         <option value="">
-                            Chọn hãng xe
+                            Chọn loại xe
                         </option>
 
                         <option value="Thaco">
-                            Thaco
+                            24 phòng
                         </option>
 
                         <option value="Hyundai">
-                            Hyundai
+                            34 phòng
                         </option>
 
                         <option value="Samco">
-                            Tracomeco
+                            44 giường
                         </option>
                     </select>
 

@@ -14,6 +14,8 @@ import {
 import BookingSearchForm from '../booking/components/BookingSearchForm';
 import { searchPublicTrips } from '../booking/lib/booking-api';
 
+import TripCard from '../booking/components/TripCard';
+
 import type {
     PublicTripSearchParams,
     PublicTripSearchResult,
@@ -241,7 +243,14 @@ export default function BookingPage() {
                             </p>
                         </div>
 
-                        <TripResults trips={trips} />
+                        <div className="space-y-4">
+                            {trips.map((trip) => (
+                                <TripCard
+                                    key={trip.tripId}
+                                    trip={trip}
+                                />
+                            ))}
+                        </div>
                     </div>
                 )}
 

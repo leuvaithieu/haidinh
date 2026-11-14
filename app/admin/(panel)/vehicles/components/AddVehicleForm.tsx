@@ -172,6 +172,7 @@ export default function AddVehicleForm({
                 name,
                 seatCount: Number(seatCount),
                 vehicleType,
+                status,
                 inspectionDate: inspectionDate
                     ? new Date(inspectionDate).toISOString()
                     : undefined,
@@ -340,7 +341,7 @@ export default function AddVehicleForm({
                             24 chỗ
                         </option>
 
-                        <option value="38">
+                        <option value="34">
                             34 chỗ
                         </option>
 
@@ -361,7 +362,7 @@ export default function AddVehicleForm({
 
                 <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700">
-                        Hãng xe
+                        Loại xe
                     </label>
 
                     <select
@@ -383,15 +384,15 @@ export default function AddVehicleForm({
                             Chọn loại xe
                         </option>
 
-                        <option value="Thaco">
+                        <option value="24 phòng">
                             24 phòng
                         </option>
 
-                        <option value="Hyundai">
+                        <option value="34 phòng">
                             34 phòng
                         </option>
 
-                        <option value="Samco">
+                        <option value="44 giường">
                             44 giường
                         </option>
                     </select>

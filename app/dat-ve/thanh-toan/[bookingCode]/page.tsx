@@ -55,9 +55,7 @@ export default function BookingPaymentPage() {
 
     const [amount, setAmount] = useState('');
     const [transactionCode, setTransactionCode] = useState('');
-    const [transferContent, setTransferContent] = useState(
-        `HAIDINH ${bookingCode}`,
-    );
+    const [transferContent, setTransferContent] = useState('');
 
     const [loadingLookup, setLoadingLookup] = useState(false);
     const [loadingPayment, setLoadingPayment] = useState(false);
@@ -80,27 +78,30 @@ export default function BookingPaymentPage() {
 
     const enteredAmount = Number(amount);
 
-const qrAmount =
-    Number.isInteger(enteredAmount) &&
-    enteredAmount >= minimumAmount &&
-    enteredAmount <= remainingAmount
-        ? enteredAmount
-        : isInitialPayment
-            ? minimumAmount
-            : remainingAmount;
+    const qrAmount =
+        Number.isInteger(enteredAmount) &&
+        enteredAmount >= minimumAmount &&
+        enteredAmount <= remainingAmount
+            ? enteredAmount
+            : isInitialPayment
+                ? minimumAmount
+                : remainingAmount
+    ;
 
+    // Tạo mã QR VietQR theo ngân hàng, số tiền và mã booking.
     const qrImageUrl = bankInfo
         ? `https://img.vietqr.io/image/${encodeURIComponent(
-            bankInfo.bankCode,
-        )}-${encodeURIComponent(bankInfo.accountNumber)}-qr_only.png?${new URLSearchParams(
-            {
-                amount: String(qrAmount),
-                addInfo: transferContent,
-                accountName: bankInfo.accountName,
-            },
-        ).toString()}`
-        : '';
-
+            bankInfo.bankShortName,
+        )}-${encodeURIComponent(
+            bankInfo.accountNumber,
+        )}-qr_only.png?${new URLSearchParams({
+            amount: String(qrAmount),
+            addInfo: transferContent,
+            accountName: bankInfo.accountName,
+        }).toString()}`
+        : ''
+    ;
+        
     const isHoldExpired =
         isInitialPayment &&
         (
@@ -122,6 +123,12 @@ const qrAmount =
             .then((data) => {
                 if (isMounted) {
                     setBankInfo(data);
+
+                    // Ghép tiền tố chuyển khoản từ Backend với mã booking hiện tại.
+                    setTransferContent(
+                        `${data.transferContent.trim() || 'HD'} ${bookingCode}`,
+                    );
+
                     setBankInfoError('');
                 }
             })
@@ -578,10 +585,8 @@ const qrAmount =
                                                 type="text"
                                                 maxLength={255}
                                                 value={transferContent}
-                                                onChange={(event) =>
-                                                    setTransferContent(event.target.value)
-                                                }
-                                                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                                                readOnly
+                                                className="w-full rounded-xl border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-700 outline-none"
                                             />
                                         </div>
                                     </div>

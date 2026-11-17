@@ -339,8 +339,10 @@ export async function lookupPublicBooking(
 export type PublicBankInfo = {
     bankName: string;
     bankCode: string;
+    bankShortName: string;
     accountNumber: string;
     accountName: string;
+    transferContent: string;
 };
 
 // Lấy thông tin tài khoản ngân hàng công khai để khách chuyển khoản.
@@ -358,7 +360,13 @@ export async function getPublicBankInfo(): Promise<PublicBankInfo> {
 
     const data: PublicBankInfo = await response.json();
 
-    if (!data.bankCode || !data.accountNumber || !data.accountName) {
+    if (
+        !data.bankCode?.trim() ||
+        !data.bankName?.trim() ||
+        !data.bankShortName?.trim() ||
+        !data.accountNumber?.trim() ||
+        !data.accountName?.trim()
+    ) {
         throw new Error(
             'Thông tin tài khoản ngân hàng chưa được cấu hình đầy đủ.',
         );

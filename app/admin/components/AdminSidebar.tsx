@@ -156,7 +156,7 @@ const menuGroups = [
         label: 'Cài đặt hệ thống',
         href: '/admin/system-settings',
         icon: Settings,
-        enabled: false,
+        enabled: true,
       },
     ],
   },

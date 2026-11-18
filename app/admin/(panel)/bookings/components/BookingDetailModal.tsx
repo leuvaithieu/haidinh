@@ -98,6 +98,7 @@ export default function BookingDetailModal({
     booking,
     open,
     onClose,
+    onCancel,
 }: BookingDetailModalProps) {
     if (!open) return null;
 
@@ -477,7 +478,19 @@ export default function BookingDetailModal({
                 </div>
 
                 {/* Footer */}
-                <div className="flex shrink-0 justify-end border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                <div className="flex shrink-0 items-center justify-between gap-3 border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+                    <div>
+                        {booking?.status === 'CONFIRMED' && (
+                            <button
+                                type="button"
+                                onClick={() => onCancel(booking)}
+                                className="h-10 rounded-lg border border-red-200 bg-white px-4 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                            >
+                                Hủy booking
+                            </button>
+                        )}
+                    </div>
+
                     <button
                         type="button"
                         onClick={onClose}

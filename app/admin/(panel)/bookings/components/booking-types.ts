@@ -291,14 +291,16 @@ export type CreateBookingPayload = {
 };
 
 /**
- * Kết quả API hủy booking.
+ * Kết quả API hủy booking đã xác nhận.
  */
 export type CancelBookingResponse = {
     message: string;
     bookingId: string;
     status: 'CANCELLED';
+    cancelledTicketCount: number;
+    releasedSeatCount: number;
+    reason: string | null;
 };
-
 /**
  * Kiểu dữ liệu thông báo trên giao diện Booking.
  */
@@ -345,6 +347,7 @@ export type BookingDetailModalProps = {
     booking: BookingDetail | null;
     open: boolean;
     onClose: () => void;
+    onCancel: (booking: BookingDetail) => void;
 };
 
 /**

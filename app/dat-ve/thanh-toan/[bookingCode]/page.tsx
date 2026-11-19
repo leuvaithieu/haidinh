@@ -54,8 +54,11 @@ export default function BookingPaymentPage() {
     const [bankInfoError, setBankInfoError] = useState('');
 
     const [amount, setAmount] = useState('');
+    const [paymentOption, setPaymentOption] = useState<'FULL' | 'ADVANCE'>('FULL');
     const [transactionCode, setTransactionCode] = useState('');
-    const [transferContent, setTransferContent] = useState('');
+    const [transferContent, setTransferContent] = useState(
+        `HAIDINH ${bookingCode}`,
+    );
 
     const [loadingLookup, setLoadingLookup] = useState(false);
     const [loadingPayment, setLoadingPayment] = useState(false);
@@ -76,32 +79,33 @@ export default function BookingPaymentPage() {
         ? booking?.depositAmount ?? 0
         : 1;
 
-    const enteredAmount = Number(amount);
-
-    const qrAmount =
-        Number.isInteger(enteredAmount) &&
-        enteredAmount >= minimumAmount &&
-        enteredAmount <= remainingAmount
-            ? enteredAmount
-            : isInitialPayment
-                ? minimumAmount
-                : remainingAmount
+    // Xác định số tiền theo phương thức thanh toán ban đầu.
+    const selectedPaymentAmount =
+        paymentOption === 'FULL'
+            ? booking?.totalAmount ?? remainingAmount
+            : minimumAmount
+    ;
+    const amountToReport = isInitialPayment
+        ? selectedPaymentAmount
+        : Number(amount)
     ;
 
-    // Tạo mã QR VietQR theo ngân hàng, số tiền và mã booking.
+    // Tạo mã QR VietQR có điền sẵn số tiền thanh toán lần đầu.
     const qrImageUrl = bankInfo
         ? `https://img.vietqr.io/image/${encodeURIComponent(
-            bankInfo.bankShortName,
+            bankInfo.bankCode,
         )}-${encodeURIComponent(
             bankInfo.accountNumber,
         )}-qr_only.png?${new URLSearchParams({
-            amount: String(qrAmount),
+            ...(isInitialPayment
+                ? { amount: String(selectedPaymentAmount) }
+                : {}),
             addInfo: transferContent,
             accountName: bankInfo.accountName,
         }).toString()}`
         : ''
     ;
-        
+
     const isHoldExpired =
         isInitialPayment &&
         (
@@ -123,12 +127,6 @@ export default function BookingPaymentPage() {
             .then((data) => {
                 if (isMounted) {
                     setBankInfo(data);
-
-                    // Ghép tiền tố chuyển khoản từ Backend với mã booking hiện tại.
-                    setTransferContent(
-                        `${data.transferContent?.trim() || 'HD'} ${bookingCode}`,
-                    );
-
                     setBankInfoError('');
                 }
             })
@@ -161,6 +159,7 @@ export default function BookingPaymentPage() {
         setBooking(null);
         setReported(false);
         setAmount('');
+        setPaymentOption('FULL');
 
         try {
             const result = await lookupPublicBooking(
@@ -190,7 +189,7 @@ export default function BookingPaymentPage() {
             return;
         }
 
-        const paymentAmount = Number(amount);
+        const paymentAmount = amountToReport;
 
         if (!Number.isInteger(paymentAmount) || paymentAmount <= 0) {
             setError('Vui lòng nhập số tiền chuyển hợp lệ.');
@@ -216,8 +215,6 @@ export default function BookingPaymentPage() {
 
         try {
             await reportBookingPayment(booking.id, {
-                bookingCode: booking.bookingCode,
-                customerPhone: customerPhone.trim(),
                 amount: paymentAmount,
                 ...(transactionCode.trim()
                     ? { transactionCode: transactionCode.trim() }
@@ -373,7 +370,7 @@ export default function BookingPaymentPage() {
                                 {isInitialPayment && (
                                     <div className="rounded-xl bg-amber-50 p-4">
                                         <p className="text-xs text-amber-800">
-                                            Số tiền đặt cọc tối thiểu
+                                            Mức thanh toán trước tối thiểu
                                         </p>
                                         <p className="mt-1 text-lg font-bold text-amber-900">
                                             {formatCurrency(booking.depositAmount)}
@@ -442,6 +439,65 @@ export default function BookingPaymentPage() {
                             </section>
                         ) : canReportPayment ? (
                             <section className="space-y-5">
+                                {isInitialPayment && (
+                                <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                                    <h2 className="font-bold text-gray-900">
+                                        Chọn phương thức thanh toán
+                                    </h2>
+
+                                    <div className="mt-4 space-y-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentOption('FULL')}
+                                            className={`w-full rounded-xl border p-4 text-left transition ${
+                                                paymentOption === 'FULL'
+                                                    ? 'border-green-600 bg-green-50 ring-1 ring-green-600'
+                                                    : 'border-gray-200 hover:border-gray-400'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between gap-3">
+                                                <span className="font-semibold text-gray-900">
+                                                    Thanh toán toàn bộ
+                                                </span>
+
+                                                <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
+                                                    Khuyến nghị
+                                                </span>
+                                            </div>
+
+                                            <p className="mt-2 text-xl font-bold text-green-700">
+                                                {formatCurrency(booking.totalAmount)}
+                                            </p>
+
+                                            <p className="mt-1 text-sm text-gray-500">
+                                                Thanh toán hết số tiền còn lại của vé.
+                                            </p>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setPaymentOption('ADVANCE')}
+                                            className={`w-full rounded-xl border p-4 text-left transition ${
+                                                paymentOption === 'ADVANCE'
+                                                    ? 'border-red-600 bg-red-50 ring-1 ring-red-600'
+                                                    : 'border-gray-200 hover:border-gray-400'
+                                            }`}
+                                        >
+                                            <span className="font-semibold text-gray-900">
+                                                Thanh toán trước
+                                            </span>
+
+                                            <p className="mt-2 text-xl font-bold text-red-600">
+                                                {formatCurrency(minimumAmount)}
+                                            </p>
+
+                                            <p className="mt-1 text-sm text-gray-500">
+                                                Thanh toán theo mức tối thiểu. Số tiền còn lại thanh toán sau.
+                                            </p>
+                                        </button>
+                                    </div>
+                                </div>
+                                )}
                                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
                                     <h2 className="font-bold text-amber-900">
                                         Hướng dẫn chuyển khoản
@@ -479,8 +535,15 @@ export default function BookingPaymentPage() {
                                                     Quét mã QR để chuyển khoản
                                                 </p>
 
-                                                <p className="mt-2 text-sm text-gray-600">
-                                                    Số tiền: {formatCurrency(qrAmount)}
+                                                <p className="mt-2 text-sm font-semibold text-red-600">
+                                                    Số tiền cần chuyển:{' '}
+                                                    {isInitialPayment
+                                                        ? formatCurrency(selectedPaymentAmount)
+                                                        : Number.isInteger(Number(amount)) &&
+                                                            Number(amount) >= minimumAmount &&
+                                                            Number(amount) <= remainingAmount
+                                                            ? formatCurrency(Number(amount))
+                                                            : 'Vui lòng nhập số tiền bên dưới'}
                                                 </p>
 
                                                 <img
@@ -490,7 +553,9 @@ export default function BookingPaymentPage() {
                                                 />
 
                                                 <p className="mt-2 text-xs text-gray-500">
-                                                    Kiểm tra đúng số tiền và nội dung trước khi xác nhận chuyển khoản.
+                                                    {isInitialPayment
+                                                        ? 'Mã QR đã điền sẵn số tiền theo phương thức thanh toán đã chọn. Vui lòng kiểm tra trước khi chuyển khoản.'
+                                                        : 'Vui lòng nhập số tiền cần thanh toán trên ứng dụng ngân hàng.'}
                                                 </p>
                                             </div>
                                         </>
@@ -549,16 +614,17 @@ export default function BookingPaymentPage() {
                                                 max={remainingAmount}
                                                 step="1"
                                                 required
-                                                value={amount}
-                                                onChange={(event) =>
-                                                    setAmount(event.target.value)
-                                                }
+                                                readOnly={isInitialPayment}
+                                                value={isInitialPayment ? String(selectedPaymentAmount) : amount}
+                                                onChange={(event) => setAmount(event.target.value)}
                                                 placeholder="Nhập số tiền thực tế đã chuyển"
-                                                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                                                className={`w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100 ${
+                                                    isInitialPayment ? 'bg-gray-100 font-semibold text-gray-800' : ''
+                                                }`}
                                             />
                                             {isInitialPayment && (
                                                 <p className="mt-1 text-xs text-gray-500">
-                                                    Tối thiểu {formatCurrency(booking.depositAmount)}.
+                                                    Số tiền được xác định theo phương thức thanh toán đã chọn.
                                                 </p>
                                             )}
                                         </div>
@@ -587,8 +653,10 @@ export default function BookingPaymentPage() {
                                                 type="text"
                                                 maxLength={255}
                                                 value={transferContent}
-                                                readOnly
-                                                className="w-full rounded-xl border border-gray-300 bg-gray-100 px-4 py-3 text-sm text-gray-700 outline-none"
+                                                onChange={(event) =>
+                                                    setTransferContent(event.target.value)
+                                                }
+                                                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
                                             />
                                         </div>
                                     </div>

@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Ticket,
   Receipt,
+  CreditCard,
   Globe,
   X,
 } from 'lucide-react';
@@ -87,6 +88,12 @@ const menuGroups = [
         label: 'Vé và đặt chỗ',
         href: '/admin/bookings',
         icon: Ticket,
+        enabled: true,
+      },
+      {
+        label: 'Thanh toán',
+        href: '/admin/payments',
+        icon: CreditCard,
         enabled: true,
       },
       {

@@ -50,10 +50,10 @@ export default function BookingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [toast, setToast] = useState<BookingToast>(null);
 
-    const [selectedBooking, setSelectedBooking] =
-        useState<BookingDetail | null>(null);
+    const [selectedBooking, setSelectedBooking] = useState<BookingDetail | null>(null);
 
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [cancellationReason, setCancellationReason] = useState('');
 
     const [bookingToCancel, setBookingToCancel] =
         useState<BookingListItem | null>(null);
@@ -250,8 +250,12 @@ export default function BookingsPage() {
         setSelectedBooking(null);
     }
 
-    // Kiểm tra booking có đủ điều kiện hủy theo nghiệp vụ BE hay không.
+    // Kiểm tra booking có đủ điều kiện hiển thị thao tác hủy theo nghiệp vụ BE hay không.
     function canCancelBooking(booking: BookingListItem) {
+        if (booking.status === 'CONFIRMED') {
+            return true;
+        }
+
         const allowedPaymentStatuses: PaymentStatus[] = [
             'UNPAID',
             'FAILED',
@@ -270,18 +274,18 @@ export default function BookingsPage() {
 
         if (!canCancelBooking(booking)) {
             setToast({
-                message:
-                    'Booking này không đủ điều kiện hủy. Vui lòng kiểm tra trạng thái booking và thanh toán.',
+                message: 'Booking này không đủ điều kiện hủy.',
                 type: 'error',
             });
 
             return;
         }
 
+        setCancellationReason('');
         setBookingToCancel(booking);
     }
 
-    // Gửi yêu cầu hủy booking đến BE sau khi người dùng xác nhận.
+    // Gửi yêu cầu hủy booking đến BE theo trạng thái hiện tại.
     async function confirmCancelBooking() {
         if (!bookingToCancel || !isAuthorized) return;
 
@@ -289,8 +293,7 @@ export default function BookingsPage() {
             setBookingToCancel(null);
 
             setToast({
-                message:
-                    'Booking đã thay đổi trạng thái và không còn đủ điều kiện hủy.',
+                message: 'Booking đã thay đổi trạng thái và không còn đủ điều kiện hủy.',
                 type: 'error',
             });
 
@@ -301,31 +304,50 @@ export default function BookingsPage() {
         setIsCancelSubmitting(true);
 
         try {
-            const response = await apiFetch(
-                `/bookings/${bookingToCancel.id}/cancel`,
-                {
-                    method: 'PATCH',
-                },
-            );
+            const isConfirmedBooking =
+                bookingToCancel.status === 'CONFIRMED';
+
+            const endpoint = isConfirmedBooking
+                ? `/bookings/${bookingToCancel.id}/cancel-confirmed`
+                : `/bookings/${bookingToCancel.id}/cancel`;
+
+            const response = await apiFetch(endpoint, {
+                method: isConfirmedBooking ? 'POST' : 'PATCH',
+                ...(isConfirmedBooking && {
+                    body: JSON.stringify(
+                        cancellationReason.trim()
+                            ? { reason: cancellationReason.trim() }
+                            : {},
+                    ),
+                }),
+            });
+
+            const result = await response.json().catch(() => null);
 
             if (!response.ok) {
-                const data = await response.json().catch(() => null);
-
                 throw new Error(
-                    Array.isArray(data?.message)
-                        ? data.message.join(', ')
-                        : data?.message || 'Hủy booking thất bại',
+                    Array.isArray(result?.message)
+                        ? result.message.join(', ')
+                        : result?.message || 'Hủy booking thất bại',
                 );
             }
 
             const cancelledBooking = bookingToCancel;
 
             setBookingToCancel(null);
+            setCancellationReason('');
+
+            // Đóng modal chi tiết nếu booking vừa hủy đang được mở.
+            if (selectedBooking?.id === cancelledBooking.id) {
+                handleCloseDetail();
+            }
 
             await getBookings(filters);
 
             setToast({
-                message: `Đã hủy booking ${cancelledBooking.bookingCode} thành công`,
+                message: isConfirmedBooking
+                    ? `Đã hủy booking ${cancelledBooking.bookingCode}. Đã hủy ${result?.cancelledTicketCount ?? 0} vé và giải phóng ${result?.releasedSeatCount ?? 0} ghế.`
+                    : `Đã hủy booking ${cancelledBooking.bookingCode} thành công.`,
                 type: 'success',
             });
         } catch (error) {
@@ -393,11 +415,12 @@ export default function BookingsPage() {
                 booking={selectedBooking}
                 open={isDetailModalOpen}
                 onClose={handleCloseDetail}
+                onCancel={handleRequestCancel}
             />
 
-            {/* Xác nhận trước khi hủy booking */}
+            {/* Xác nhận hủy booking PENDING */}
             <ConfirmModal
-                isOpen={bookingToCancel !== null}
+                isOpen={bookingToCancel?.status === 'PENDING'}
                 title="Xác nhận hủy booking"
                 message={
                     bookingToCancel
@@ -415,6 +438,84 @@ export default function BookingsPage() {
                     }
                 }}
             />
+
+            {/* Xác nhận hủy booking CONFIRMED */}
+            {bookingToCancel?.status === 'CONFIRMED' && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
+                    <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-2xl sm:p-6">
+                        <h2 className="text-lg font-bold text-slate-900">
+                            Xác nhận hủy booking đã xác nhận
+                        </h2>
+
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                            Bạn đang hủy booking{' '}
+                            <strong>{bookingToCancel.bookingCode}</strong> của khách{' '}
+                            <strong>{bookingToCancel.customerName}</strong>.
+                        </p>
+
+                        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                            <p className="text-sm leading-6 text-amber-800">
+                                Chỉ thực hiện sau khi đã được quản lý phê duyệt.
+                                Việc hoàn tiền hoặc khấu trừ tiền được xử lý bên ngoài hệ thống.
+                            </p>
+                        </div>
+
+                        <div className="mt-4">
+                            <label
+                                htmlFor="cancellation-reason"
+                                className="mb-2 block text-sm font-medium text-slate-700"
+                            >
+                                Lý do hủy
+                                <span className="ml-1 font-normal text-slate-400">
+                                    (Không bắt buộc)
+                                </span>
+                            </label>
+
+                            <textarea
+                                id="cancellation-reason"
+                                value={cancellationReason}
+                                onChange={(event) =>
+                                    setCancellationReason(event.target.value)
+                                }
+                                maxLength={500}
+                                rows={3}
+                                disabled={isCancelSubmitting}
+                                placeholder="Nhập lý do hủy booking nếu có..."
+                                className="w-full resize-none rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-red-500 focus:ring-2 focus:ring-red-100 disabled:bg-slate-50"
+                            />
+
+                            <p className="mt-1 text-right text-xs text-slate-400">
+                                {cancellationReason.length}/500
+                            </p>
+                        </div>
+
+                        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                            <button
+                                type="button"
+                                disabled={isCancelSubmitting}
+                                onClick={() => {
+                                    setBookingToCancel(null);
+                                    setCancellationReason('');
+                                }}
+                                className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                            >
+                                Quay lại
+                            </button>
+
+                            <button
+                                type="button"
+                                disabled={isCancelSubmitting}
+                                onClick={confirmCancelBooking}
+                                className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {isCancelSubmitting
+                                    ? 'Đang xử lý...'
+                                    : 'Xác nhận hủy booking'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Thông báo kết quả thao tác */}
             {toast && (

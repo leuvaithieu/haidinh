@@ -81,7 +81,7 @@ export type PaymentTripRoutePoint = {
     pointName: string;
     direction: TripDirection;
     sequence: number;
-    plannedTime: string | null;
+    plannedTime: string;
     actualTime: string | null;
 };
 
@@ -114,9 +114,9 @@ export type PaymentTrip = {
     routeId: string;
     vehicleId: string;
     plannedDeparture: string;
-    plannedArrival: string;
-    actualDeparture?: string | null;
-    actualArrival?: string | null;
+    plannedArrival: string | null;
+    actualDeparture: string | null;
+    actualArrival: string | null;
     status: string;
     scheduleType: string;
     route?: PaymentRoute;

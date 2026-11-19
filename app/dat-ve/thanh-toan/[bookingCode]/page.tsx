@@ -126,7 +126,7 @@ export default function BookingPaymentPage() {
 
                     // Ghép tiền tố chuyển khoản từ Backend với mã booking hiện tại.
                     setTransferContent(
-                        `${data.transferContent.trim() || 'HD'} ${bookingCode}`,
+                        `${data.transferContent?.trim() || 'HD'} ${bookingCode}`,
                     );
 
                     setBankInfoError('');
@@ -216,6 +216,8 @@ export default function BookingPaymentPage() {
 
         try {
             await reportBookingPayment(booking.id, {
+                bookingCode: booking.bookingCode,
+                customerPhone: customerPhone.trim(),
                 amount: paymentAmount,
                 ...(transactionCode.trim()
                     ? { transactionCode: transactionCode.trim() }

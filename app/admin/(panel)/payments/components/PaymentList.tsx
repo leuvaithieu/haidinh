@@ -54,6 +54,7 @@ function getTripInformation(payment: PaymentListItem) {
 }
 
 // Hiển thị thông tin thời gian chờ xác nhận thanh toán.
+// Hiển thị thời gian chờ xác nhận theo đúng quy tắc thanh toán của BE.
 function PaymentReviewTime({
     payment,
 }: {
@@ -67,6 +68,20 @@ function PaymentReviewTime({
                 </span>
 
                 <span className="text-xs text-red-600">
+                    Đã chờ {payment.elapsedMinutes ?? 0} phút
+                </span>
+            </div>
+        );
+    }
+
+    if (payment.booking.status === 'CONFIRMED') {
+        return (
+            <div className="flex flex-col gap-1">
+                <span className="text-sm font-medium text-slate-700">
+                    Chờ xác nhận thanh toán bổ sung
+                </span>
+
+                <span className="text-xs text-slate-500">
                     Đã chờ {payment.elapsedMinutes ?? 0} phút
                 </span>
             </div>

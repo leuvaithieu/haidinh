@@ -237,6 +237,8 @@ export async function createPublicBooking(
 }
 
 export type ReportBookingPaymentParams = {
+    bookingCode: string;
+    customerPhone: string;
     amount: number;
     transactionCode?: string;
     transferContent?: string;
@@ -342,7 +344,7 @@ export type PublicBankInfo = {
     bankShortName: string;
     accountNumber: string;
     accountName: string;
-    transferContent: string;
+    transferContent: string | null;
 };
 
 // Lấy thông tin tài khoản ngân hàng công khai để khách chuyển khoản.

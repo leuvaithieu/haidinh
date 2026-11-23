@@ -215,6 +215,8 @@ export default function BookingPaymentPage() {
 
         try {
             await reportBookingPayment(booking.id, {
+                bookingCode: booking.bookingCode,
+                customerPhone: booking.customerPhone,
                 amount: paymentAmount,
                 ...(transactionCode.trim()
                     ? { transactionCode: transactionCode.trim() }

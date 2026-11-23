@@ -7,6 +7,10 @@ import { apiFetch } from '@/lib/api';
 import BookingFiltersPanel from './components/BookingFilters';
 import BookingList from './components/BookingList';
 import BookingDetailModal from './components/BookingDetailModal';
+import BookingByDate from './components/BookingByDate';
+import TripBookingGroups from './components/TripBookingGroups';
+
+import type { BookingByDateResponse } from './components/booking-by-date-types';
 
 import ConfirmModal from '../../components/ConfirmModal';
 import Toast from '../../components/Toast';
@@ -33,6 +37,9 @@ const DEFAULT_FILTERS: BookingFilters = {
 
 export default function BookingsPage() {
     const [bookings, setBookings] = useState<BookingListItem[]>([]);
+
+    const [bookingByDateData, setBookingByDateData] = useState<BookingByDateResponse | null>(null);
+    const [bookingByDateRefreshKey, setBookingByDateRefreshKey] = useState(0);
 
     const [filters, setFilters] = useState<BookingFilters>({
         ...DEFAULT_FILTERS,
@@ -244,6 +251,41 @@ export default function BookingsPage() {
         }
     }
 
+    // Tìm booking theo ID trong dữ liệu booking theo ngày hoặc danh sách hiện tại.
+    function findBookingById(bookingId: string): BookingListItem | undefined {
+        return (
+            bookingByDateData?.data
+                .flatMap((group) => group.bookings)
+                .find((booking) => booking.id === bookingId) ??
+            bookings.find((booking) => booking.id === bookingId)
+        );
+    }
+
+    // Mở chi tiết booking từ danh sách booking theo ngày.
+    function handleViewBookingById(bookingId: string) {
+        const booking = findBookingById(bookingId);
+
+        if (booking) {
+            void handleViewDetail(booking);
+        }
+    }
+
+    // Yêu cầu hủy booking từ danh sách booking theo ngày.
+    function handleCancelBookingById(bookingId: string) {
+        const booking = findBookingById(bookingId);
+
+        if (booking) {
+            handleRequestCancel(booking);
+        }
+    }
+
+    // Kiểm tra điều kiện hủy booking theo ID.
+    function canCancelBookingById(bookingId: string): boolean {
+        const booking = findBookingById(bookingId);
+
+        return booking ? canCancelBooking(booking) : false;
+    }
+
     // Đóng modal chi tiết booking và xóa dữ liệu đang xem.
     function handleCloseDetail() {
         setIsDetailModalOpen(false);
@@ -343,6 +385,7 @@ export default function BookingsPage() {
             }
 
             await getBookings(filters);
+            setBookingByDateRefreshKey((current) => current + 1);
 
             setToast({
                 message: isConfirmedBooking
@@ -366,6 +409,24 @@ export default function BookingsPage() {
     return (
         <main className="space-y-6">
             {/* Tiêu đề trang và tổng số booking */}
+            {/* Tra cứu booking theo ngày khởi hành */}
+            <section className="space-y-4">
+                <BookingByDate
+                    onDataLoaded={setBookingByDateData}
+                    refreshKey={bookingByDateRefreshKey}
+                />
+
+                {bookingByDateData && (
+                    <TripBookingGroups
+                        groups={bookingByDateData.data}
+                        onView={handleViewBookingById}
+                        onCancel={handleCancelBookingById}
+                        canCancel={(bookingId) =>
+                            isAuthorized && canCancelBookingById(bookingId)
+                        }
+                    />
+                )}
+            </section>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">

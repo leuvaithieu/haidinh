@@ -478,7 +478,7 @@ export default function SystemSettingsPage() {
                                         id="minDepositAmount"
                                         type="number"
                                         min={1}
-                                        step={1000}
+                                        step={1}
                                         required
                                         disabled={!isAdmin}
                                         value={bookingSettings.minDepositAmount}

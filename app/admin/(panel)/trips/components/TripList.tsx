@@ -37,6 +37,7 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     },
 };
 
+// Định dạng ngày giờ hiển thị theo múi giờ Việt Nam.
 function formatDate(value?: string | Date | null): string {
     if (!value) return '—';
 
@@ -53,6 +54,7 @@ function formatDate(value?: string | Date | null): string {
     });
 }
 
+// Hiển thị trạng thái chuyến xe.
 function StatusBadge({ status }: { status: string }) {
     const config = statusConfig[status] ?? {
         label: status || 'Không xác định',
@@ -69,6 +71,7 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
+// Hiển thị loại lịch chạy.
 function ScheduleBadge({ scheduleType }: { scheduleType: string }) {
     const isTet = scheduleType === 'TET';
 
@@ -81,6 +84,23 @@ function ScheduleBadge({ scheduleType }: { scheduleType: string }) {
             }
         >
             {isTet ? 'Lịch Tết' : 'Thông thường'}
+        </span>
+    );
+}
+
+// Hiển thị trạng thái phân công xe và nhân sự.
+function AssignmentLabel({ value }: { value?: string | null }) {
+    if (value) {
+        return (
+            <span className="font-medium text-slate-800">
+                {value}
+            </span>
+        );
+    }
+
+    return (
+        <span className="font-medium text-amber-600">
+            Chưa phân công
         </span>
     );
 }
@@ -131,7 +151,7 @@ export default function TripList({
                         Danh sách chuyến xe
                     </h2>
                     <p className="mt-1 text-sm text-slate-500">
-                        Thông tin lịch chạy và nhân sự phụ trách
+                        Thông tin lịch chạy, phương tiện và nhân sự phụ trách
                     </p>
                 </div>
 
@@ -143,7 +163,7 @@ export default function TripList({
             {/* Desktop table */}
             <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:block">
                 <div className="overflow-x-auto">
-                    <table className="w-full min-w-[1100px] text-left text-sm">
+                    <table className="w-full min-w-[1200px] text-left text-sm">
                         <thead className="border-b border-slate-200 bg-slate-50">
                             <tr>
                                 <th className="px-5 py-4 font-semibold text-slate-600">
@@ -162,7 +182,7 @@ export default function TripList({
                                     Quay đầu
                                 </th>
                                 <th className="px-5 py-4 font-semibold text-slate-600">
-                                    Tài xế
+                                    Nhân sự
                                 </th>
                                 <th className="px-5 py-4 font-semibold text-slate-600">
                                     Lịch chạy
@@ -198,11 +218,9 @@ export default function TripList({
                                     </td>
 
                                     <td className="px-5 py-4">
-                                        <p className="font-medium text-slate-800">
-                                            {trip.vehicle?.name ?? 'Chưa gán xe'}
-                                        </p>
+                                        <AssignmentLabel value={trip.vehicle?.name} />
                                         <p className="mt-1 text-xs text-slate-500">
-                                            {trip.vehicle?.licensePlate ?? '—'}
+                                            {trip.vehicle?.licensePlate ?? 'Chưa có biển số'}
                                         </p>
                                     </td>
 
@@ -219,14 +237,24 @@ export default function TripList({
                                     </td>
 
                                     <td className="px-5 py-4">
-                                        <p className="font-medium text-slate-800">
-                                            {trip.driver1?.name ?? '—'}
-                                        </p>
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            {trip.driver2?.name
-                                                ? `Tài xế 2: ${trip.driver2.name}`
-                                                : 'Chưa có tài xế 2'}
-                                        </p>
+                                        <div className="space-y-1.5">
+                                            <p className="text-xs text-slate-500">
+                                                Tài xế 1:{' '}
+                                                <AssignmentLabel value={trip.driver1?.name} />
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                Tài xế 2:{' '}
+                                                <AssignmentLabel value={trip.driver2?.name} />
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                Phụ xe 1:{' '}
+                                                <AssignmentLabel value={trip.assistant1?.name} />
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                Phụ xe 2:{' '}
+                                                <AssignmentLabel value={trip.assistant2?.name} />
+                                            </p>
+                                        </div>
                                     </td>
 
                                     <td className="px-5 py-4">
@@ -315,7 +343,7 @@ export default function TripList({
 
                                 <div className="min-w-0">
                                     <p className="font-semibold text-slate-800">
-                                        {trip.vehicle?.name ?? 'Chưa gán xe'}
+                                        <AssignmentLabel value={trip.vehicle?.name} />
                                     </p>
                                     <p className="mt-0.5 text-sm text-slate-500">
                                         {trip.vehicle?.licensePlate ?? 'Chưa có biển số'}
@@ -344,22 +372,28 @@ export default function TripList({
                             </div>
                         </div>
 
-                        <div className="mt-3 space-y-2">
+                        <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
                             <div className="flex items-start justify-between gap-3 text-sm">
                                 <span className="text-slate-500">Tài xế 1</span>
-                                <span className="text-right font-medium text-slate-800">
-                                    {trip.driver1?.name ?? '—'}
-                                </span>
+                                <AssignmentLabel value={trip.driver1?.name} />
                             </div>
 
                             <div className="flex items-start justify-between gap-3 text-sm">
                                 <span className="text-slate-500">Tài xế 2</span>
-                                <span className="text-right font-medium text-slate-800">
-                                    {trip.driver2?.name ?? '—'}
-                                </span>
+                                <AssignmentLabel value={trip.driver2?.name} />
                             </div>
 
-                            <div className="flex items-center justify-between gap-3 pt-1">
+                            <div className="flex items-start justify-between gap-3 text-sm">
+                                <span className="text-slate-500">Phụ xe 1</span>
+                                <AssignmentLabel value={trip.assistant1?.name} />
+                            </div>
+
+                            <div className="flex items-start justify-between gap-3 text-sm">
+                                <span className="text-slate-500">Phụ xe 2</span>
+                                <AssignmentLabel value={trip.assistant2?.name} />
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3 pt-2">
                                 <span className="text-sm text-slate-500">
                                     Loại lịch
                                 </span>

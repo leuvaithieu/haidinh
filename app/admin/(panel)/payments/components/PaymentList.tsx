@@ -319,7 +319,7 @@ export default function PaymentList({
                                 </th>
 
                                 <th className="px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                    Số tiền
+                                    Số tiền giao dịch
                                 </th>
 
                                 <th className="px-4 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -378,7 +378,7 @@ export default function PaymentList({
                                         </p>
 
                                         <p className="mt-1 text-xs text-slate-500">
-                                            Booking: {formatCurrency(payment.booking.totalAmount)}
+                                            Tổng số tiền: {formatCurrency(payment.booking.totalAmount)}
                                         </p>
                                     </td>
 

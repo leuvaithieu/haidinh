@@ -11,23 +11,31 @@ type Option = {
     licensePlate?: string;
 };
 
+type SeatLayoutOption = {
+    id: string;
+    name: string;
+    isTemplate: boolean;
+    status: string;
+};
+
 type Trip = {
     id: string;
     routeId: string;
-    vehicleId: string;
-    driver1Id: string;
-    driver2Id: string;
-    assistant1Id: string;
-    assistant2Id?: string | null;
+    seatLayoutId: string;
+    vehicleId: string | null;
+    driver1Id: string | null;
+    driver2Id: string | null;
+    assistant1Id: string | null;
+    assistant2Id: string | null;
     plannedDeparture: string;
-    returnPlannedDeparture?: string | null;
+    returnPlannedDeparture: string;
     scheduleType: 'NORMAL' | 'TET';
     status: string;
     route?: { id: string; name: string };
-    vehicle?: { id: string; name: string; licensePlate?: string };
-    driver1?: { id: string; name: string };
-    driver2?: { id: string; name: string };
-    assistant1?: { id: string; name: string };
+    vehicle?: { id: string; name: string; licensePlate?: string } | null;
+    driver1?: { id: string; name: string } | null;
+    driver2?: { id: string; name: string } | null;
+    assistant1?: { id: string; name: string } | null;
     assistant2?: { id: string; name: string } | null;
 };
 
@@ -39,6 +47,7 @@ type TripFormProps = {
 
 type TripFormData = {
     routeId: string;
+    seatLayoutId: string;
     vehicleId: string;
     driver1Id: string;
     driver2Id: string;
@@ -51,6 +60,7 @@ type TripFormData = {
 
 const initialForm: TripFormData = {
     routeId: '',
+    seatLayoutId: '',
     vehicleId: '',
     driver1Id: '',
     driver2Id: '',
@@ -61,6 +71,7 @@ const initialForm: TripFormData = {
     returnPlannedDeparture: '',
 };
 
+// Chuyển ngày giờ từ API sang định dạng datetime-local.
 function toDateTimeLocal(value?: string | Date | null): string {
     if (!value) return '';
 
@@ -76,6 +87,7 @@ function toDateTimeLocal(value?: string | Date | null): string {
     );
 }
 
+// Lấy thông báo lỗi trả về từ API.
 function getErrorMessage(data: unknown, fallback: string): string {
     if (
         typeof data === 'object' &&
@@ -103,6 +115,7 @@ export default function TripForm({
     const [vehicles, setVehicles] = useState<Option[]>([]);
     const [drivers, setDrivers] = useState<Option[]>([]);
     const [assistants, setAssistants] = useState<Option[]>([]);
+    const [seatLayouts, setSeatLayouts] = useState<SeatLayoutOption[]>([]);
 
     const [error, setError] = useState('');
     const [isLoadingOptions, setIsLoadingOptions] = useState(true);
@@ -117,10 +130,11 @@ export default function TripForm({
 
         setForm({
             routeId: trip.routeId,
-            vehicleId: trip.vehicleId,
-            driver1Id: trip.driver1Id,
-            driver2Id: trip.driver2Id,
-            assistant1Id: trip.assistant1Id,
+            seatLayoutId: trip.seatLayoutId,
+            vehicleId: trip.vehicleId ?? '',
+            driver1Id: trip.driver1Id ?? '',
+            driver2Id: trip.driver2Id ?? '',
+            assistant1Id: trip.assistant1Id ?? '',
             assistant2Id: trip.assistant2Id ?? '',
             scheduleType: trip.scheduleType,
             plannedDeparture: toDateTimeLocal(trip.plannedDeparture),
@@ -135,29 +149,37 @@ export default function TripForm({
     useEffect(() => {
         let cancelled = false;
 
+        // Tải danh sách tuyến, xe, nhân sự và sơ đồ ghế mẫu đang hoạt động.
         async function loadOptions() {
             setIsLoadingOptions(true);
             setError('');
 
             try {
-                const [routeRes, vehicleRes, driverRes, assistantRes] =
-                    await Promise.all([
-                        apiFetch('/routes'),
-                        apiFetch('/vehicles'),
-                        apiFetch('/drivers'),
-                        apiFetch('/assistants'),
-                    ]);
+                const [
+                    routeRes,
+                    vehicleRes,
+                    driverRes,
+                    assistantRes,
+                    seatLayoutRes,
+                ] = await Promise.all([
+                    apiFetch('/routes'),
+                    apiFetch('/vehicles'),
+                    apiFetch('/drivers'),
+                    apiFetch('/assistants'),
+                    apiFetch('/seat-layout'),
+                ]);
 
                 const responses = [
                     routeRes,
                     vehicleRes,
                     driverRes,
                     assistantRes,
+                    seatLayoutRes,
                 ];
 
                 if (responses.some((response) => !response.ok)) {
                     throw new Error(
-                        'Không thể tải danh sách tuyến, xe hoặc nhân sự.',
+                        'Không thể tải danh sách tuyến, xe, nhân sự hoặc sơ đồ ghế.',
                     );
                 }
 
@@ -166,16 +188,35 @@ export default function TripForm({
                     vehicleData,
                     driverData,
                     assistantData,
+                    seatLayoutData,
                 ] = await Promise.all(
                     responses.map((response) => response.json()),
                 );
 
                 if (cancelled) return;
 
+                if (
+                    !Array.isArray(routeData) ||
+                    !Array.isArray(vehicleData) ||
+                    !Array.isArray(driverData) ||
+                    !Array.isArray(assistantData) ||
+                    !Array.isArray(seatLayoutData)
+                ) {
+                    throw new Error('Dữ liệu máy chủ trả về không hợp lệ.');
+                }
+
                 setRoutes(routeData);
                 setVehicles(vehicleData);
                 setDrivers(driverData);
                 setAssistants(assistantData);
+
+                setSeatLayouts(
+                    seatLayoutData.filter(
+                        (layout: SeatLayoutOption) =>
+                            layout.isTemplate === true &&
+                            layout.status === 'ACTIVE',
+                    ),
+                );
             } catch (err) {
                 if (cancelled) return;
 
@@ -196,6 +237,7 @@ export default function TripForm({
         };
     }, []);
 
+    // Cập nhật một trường dữ liệu trong biểu mẫu.
     function updateField<K extends keyof TripFormData>(
         field: K,
         value: TripFormData[K],
@@ -208,28 +250,34 @@ export default function TripForm({
         setError('');
     }
 
+    // Kiểm tra dữ liệu và gửi yêu cầu tạo hoặc cập nhật chuyến.
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         setError('');
 
         if (
             !form.routeId ||
-            !form.vehicleId ||
-            !form.driver1Id ||
-            !form.driver2Id ||
-            !form.assistant1Id ||
-            !form.plannedDeparture
+            !form.seatLayoutId ||
+            !form.plannedDeparture ||
+            !form.returnPlannedDeparture
         ) {
-            setError('Vui lòng điền đầy đủ các trường bắt buộc.');
+            setError(
+                'Vui lòng chọn tuyến, sơ đồ ghế và nhập đầy đủ thời gian chạy.',
+            );
             return;
         }
 
-        if (form.driver1Id === form.driver2Id) {
+        if (
+            form.driver1Id &&
+            form.driver2Id &&
+            form.driver1Id === form.driver2Id
+        ) {
             setError('Hai vị trí tài xế phải là hai người khác nhau.');
             return;
         }
 
         if (
+            form.assistant1Id &&
             form.assistant2Id &&
             form.assistant1Id === form.assistant2Id
         ) {
@@ -238,41 +286,34 @@ export default function TripForm({
         }
 
         const departureDate = new Date(form.plannedDeparture);
+        const returnDeparture = new Date(form.returnPlannedDeparture);
 
         if (Number.isNaN(departureDate.getTime())) {
             setError('Thời gian khởi hành không hợp lệ.');
             return;
         }
 
-        let returnDeparture: Date | null = null;
+        if (Number.isNaN(returnDeparture.getTime())) {
+            setError('Thời gian quay đầu không hợp lệ.');
+            return;
+        }
 
-        if (form.returnPlannedDeparture) {
-            returnDeparture = new Date(form.returnPlannedDeparture);
-
-            if (Number.isNaN(returnDeparture.getTime())) {
-                setError('Thời gian quay đầu không hợp lệ.');
-                return;
-            }
-
-            if (returnDeparture <= departureDate) {
-                setError(
-                    'Thời gian quay đầu phải sau thời gian khởi hành.',
-                );
-                return;
-            }
+        if (returnDeparture <= departureDate) {
+            setError('Thời gian quay đầu phải sau thời gian khởi hành.');
+            return;
         }
 
         const body = {
             routeId: form.routeId,
-            vehicleId: form.vehicleId,
-            driver1Id: form.driver1Id,
-            driver2Id: form.driver2Id,
-            assistant1Id: form.assistant1Id,
-            assistant2Id: form.assistant2Id || undefined,
+            seatLayoutId: form.seatLayoutId,
+            vehicleId: form.vehicleId || null,
+            driver1Id: form.driver1Id || null,
+            driver2Id: form.driver2Id || null,
+            assistant1Id: form.assistant1Id || null,
+            assistant2Id: form.assistant2Id || null,
             scheduleType: form.scheduleType,
             plannedDeparture: departureDate.toISOString(),
-            returnPlannedDeparture:
-                returnDeparture?.toISOString() ?? null,
+            returnPlannedDeparture: returnDeparture.toISOString(),
         };
 
         setIsSubmitting(true);
@@ -338,7 +379,7 @@ export default function TripForm({
                         </h2>
 
                         <p className="mt-1 text-sm text-slate-500">
-                            Khai báo lịch chạy, phương tiện và nhân sự phụ trách.
+                            Khai báo lịch chạy, sơ đồ ghế, phương tiện và nhân sự.
                         </p>
                     </div>
 
@@ -384,10 +425,7 @@ export default function TripForm({
                                         <select
                                             value={form.routeId}
                                             onChange={(event) =>
-                                                updateField(
-                                                    'routeId',
-                                                    event.target.value,
-                                                )
+                                                updateField('routeId', event.target.value)
                                             }
                                             required
                                             className={inputClass}
@@ -406,8 +444,42 @@ export default function TripForm({
 
                                     <div>
                                         <label className={labelClass}>
-                                            Phương tiện{' '}
+                                            Sơ đồ ghế mẫu{' '}
                                             <span className="text-red-600">*</span>
+                                        </label>
+
+                                        <select
+                                            value={form.seatLayoutId}
+                                            onChange={(event) =>
+                                                updateField(
+                                                    'seatLayoutId',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            required
+                                            className={inputClass}
+                                        >
+                                            <option value="">
+                                                Chọn sơ đồ ghế mẫu
+                                            </option>
+                                            {seatLayouts.map((layout) => (
+                                                <option
+                                                    key={layout.id}
+                                                    value={layout.id}
+                                                >
+                                                    {layout.name}
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        <p className="mt-1.5 text-xs text-slate-500">
+                                            Sơ đồ ghế dùng để tạo danh sách ghế cho chuyến.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>
+                                            Phương tiện
                                         </label>
 
                                         <select
@@ -418,10 +490,11 @@ export default function TripForm({
                                                     event.target.value,
                                                 )
                                             }
-                                            required
                                             className={inputClass}
                                         >
-                                            <option value="">Chọn xe</option>
+                                            <option value="">
+                                                Chưa phân công xe
+                                            </option>
                                             {vehicles.map((vehicle) => (
                                                 <option
                                                     key={vehicle.id}
@@ -438,7 +511,7 @@ export default function TripForm({
 
                                     <div>
                                         <label className={labelClass}>
-                                            Thời gian khởi hành{' '}
+                                            Thời gian khởi hành chiều đi{' '}
                                             <span className="text-red-600">*</span>
                                         </label>
 
@@ -458,7 +531,8 @@ export default function TripForm({
 
                                     <div>
                                         <label className={labelClass}>
-                                            Thời gian quay đầu
+                                            Thời gian xuất phát chiều về{' '}
+                                            <span className="text-red-600">*</span>
                                         </label>
 
                                         <input
@@ -470,11 +544,12 @@ export default function TripForm({
                                                     event.target.value,
                                                 )
                                             }
+                                            required
                                             className={inputClass}
                                         />
 
                                         <p className="mt-1.5 text-xs text-slate-500">
-                                            Thời điểm xe dự kiến xuất phát chiều về.
+                                            Thời điểm dự kiến xuất phát chiều về.
                                         </p>
                                     </div>
 
@@ -488,9 +563,7 @@ export default function TripForm({
                                             onChange={(event) =>
                                                 updateField(
                                                     'scheduleType',
-                                                    event.target.value as
-                                                        | 'NORMAL'
-                                                        | 'TET',
+                                                    event.target.value as 'NORMAL' | 'TET',
                                                 )
                                             }
                                             disabled={Boolean(trip)}
@@ -520,11 +593,14 @@ export default function TripForm({
                                     Phân công nhân sự
                                 </h3>
 
+                                <p className="text-xs text-slate-500">
+                                    Có thể để trống và phân công nhân sự sau.
+                                </p>
+
                                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div>
                                         <label className={labelClass}>
-                                            Tài xế 1{' '}
-                                            <span className="text-red-600">*</span>
+                                            Tài xế 1
                                         </label>
 
                                         <select
@@ -535,10 +611,11 @@ export default function TripForm({
                                                     event.target.value,
                                                 )
                                             }
-                                            required
                                             className={inputClass}
                                         >
-                                            <option value="">Chọn tài xế</option>
+                                            <option value="">
+                                                Chưa phân công
+                                            </option>
                                             {drivers.map((driver) => (
                                                 <option
                                                     key={driver.id}
@@ -552,8 +629,7 @@ export default function TripForm({
 
                                     <div>
                                         <label className={labelClass}>
-                                            Tài xế 2{' '}
-                                            <span className="text-red-600">*</span>
+                                            Tài xế 2
                                         </label>
 
                                         <select
@@ -564,10 +640,11 @@ export default function TripForm({
                                                     event.target.value,
                                                 )
                                             }
-                                            required
                                             className={inputClass}
                                         >
-                                            <option value="">Chọn tài xế</option>
+                                            <option value="">
+                                                Chưa phân công
+                                            </option>
                                             {drivers.map((driver) => (
                                                 <option
                                                     key={driver.id}
@@ -581,8 +658,7 @@ export default function TripForm({
 
                                     <div>
                                         <label className={labelClass}>
-                                            Phụ xe 1{' '}
-                                            <span className="text-red-600">*</span>
+                                            Phụ xe 1
                                         </label>
 
                                         <select
@@ -593,10 +669,11 @@ export default function TripForm({
                                                     event.target.value,
                                                 )
                                             }
-                                            required
                                             className={inputClass}
                                         >
-                                            <option value="">Chọn phụ xe</option>
+                                            <option value="">
+                                                Chưa phân công
+                                            </option>
                                             {assistants.map((assistant) => (
                                                 <option
                                                     key={assistant.id}
@@ -624,7 +701,7 @@ export default function TripForm({
                                             className={inputClass}
                                         >
                                             <option value="">
-                                                Không phân công
+                                                Chưa phân công
                                             </option>
                                             {assistants.map((assistant) => (
                                                 <option

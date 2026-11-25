@@ -116,13 +116,13 @@ export default function TripCard({ trip }: TripCardProps) {
                         </div>
 
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-    <BusFront className="h-4 w-4 text-red-600" />
-    <span>
-        {trip.vehicle
-            ? `${trip.vehicle.vehicleType} - ${trip.vehicle.seatCount} chỗ`
-            : `Chưa phân công xe - ${trip.totalSeats} chỗ theo sơ đồ`}
-    </span>
-</div>
+                            <BusFront className="h-4 w-4 text-red-600" />
+                            <span>
+                                {trip.vehicle
+                                    ? `${trip.vehicle.vehicleType} - ${trip.vehicle.seatCount} chỗ`
+                                    : `Chưa phân công xe - ${trip.totalSeats} chỗ theo sơ đồ`}
+                            </span>
+                        </div>
                     </div>
 
                     <Link

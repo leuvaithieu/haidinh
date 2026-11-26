@@ -342,6 +342,7 @@ export default function PaymentsPage() {
                 open={paymentToConfirm !== null}
                 loading={isConfirmSubmitting}
                 onConfirm={handleConfirmPayment}
+                onReject={handleRejectFromConfirm}
                 onClose={() => {
                     if (!isConfirmSubmitting) {
                         setPaymentToConfirm(null);

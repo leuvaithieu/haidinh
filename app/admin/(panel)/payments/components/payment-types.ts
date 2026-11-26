@@ -232,6 +232,7 @@ export type ConfirmPaymentModalProps = {
     open: boolean;
     loading: boolean;
     onConfirm: (paidAmount: number) => void;
+    onReject: () => void;
     onClose: () => void;
 };
 

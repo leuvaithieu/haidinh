@@ -391,13 +391,16 @@ export default function PricingPage() {
                                                 )}
 
                                                 {policy.pricingMode === 'TET' && (
-                                                    <p className="mt-1 text-xs text-slate-500">
-                                                        Giá toàn tuyến:{' '}
-                                                        {policy.fullRoutePrice != null
-                                                            ? `${policy.fullRoutePrice.toLocaleString('vi-VN')} đ`
-                                                            : '—'}
-                                                    </p>
-                                                )}
+                                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                                    <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700">
+                                                        Giá Tết theo ngày
+                                                    </span>
+
+                                                    <span className="text-xs text-slate-500">
+                                                        {policy.tetDailyPrices?.length ?? 0} ngày có giá
+                                                    </span>
+                                                </div>
+                                            )}
                                             </td>
 
                                             <td className="px-5 py-4">

@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useEffect, useState } from 'react';
 import { ConfirmPaymentModalProps } from './payment-types';
 
 // Định dạng số tiền theo đơn vị tiền Việt Nam.
@@ -12,7 +13,13 @@ function formatCurrency(amount: number) {
     }).format(amount);
 }
 
-// Hiển thị hộp thoại xác nhận đã nhận được tiền thanh toán.
+// Chuyển chuỗi nhập liệu thành số tiền nguyên.
+function parseAmount(value: string) {
+    const amount = Number(value.replace(/[^\d]/g, ''));
+    return Number.isFinite(amount) ? amount : 0;
+}
+
+// Hiển thị hộp thoại nhập tổng tiền lũy kế thực tế đã nhận.
 export default function ConfirmPaymentModal({
     payment,
     open,
@@ -20,14 +27,52 @@ export default function ConfirmPaymentModal({
     onConfirm,
     onClose,
 }: ConfirmPaymentModalProps) {
+    const [paidAmountInput, setPaidAmountInput] = useState('');
+
+    useEffect(() => {
+        if (open && payment) {
+            const currentPaidAmount = payment.booking.paidAmount ?? 0;
+            const suggestedAmount =
+                currentPaidAmount > 0
+                    ? currentPaidAmount
+                    : payment.booking.depositAmount;
+
+            setPaidAmountInput(String(suggestedAmount));
+        }
+    }, [open, payment]);
+
     if (!open || !payment) {
         return null;
     }
 
-    const remainingAmount = Math.max(
-        payment.booking.totalAmount - payment.booking.paidAmount,
-        0,
-    );
+    const booking = payment.booking;
+    const currentPaidAmount = booking.paidAmount ?? 0;
+    const totalAmount = booking.totalAmount;
+    const depositAmount = booking.depositAmount;
+    const newPaidAmount = parseAmount(paidAmountInput);
+
+    const remainingAmount = Math.max(totalAmount - currentPaidAmount, 0);
+    const newRemainingAmount = Math.max(totalAmount - newPaidAmount, 0);
+    const additionalAmount = Math.max(newPaidAmount - currentPaidAmount, 0);
+
+    const isBelowCurrentPaid = newPaidAmount < currentPaidAmount;
+    const isBelowDeposit =
+        currentPaidAmount === 0 && newPaidAmount < depositAmount;
+    const isAboveTotal = newPaidAmount > totalAmount;
+
+    const validationMessage = isBelowCurrentPaid
+        ? 'Tổng tiền mới không được thấp hơn số tiền đã ghi nhận.'
+        : isBelowDeposit
+            ? `Số tiền xác nhận lần đầu phải tối thiểu ${formatCurrency(depositAmount)}.`
+            : isAboveTotal
+                ? 'Tổng tiền xác nhận không được vượt quá tổng tiền booking.'
+                : '';
+
+    const canConfirm =
+        newPaidAmount > 0 &&
+        !validationMessage &&
+        additionalAmount > 0 &&
+        !loading;
 
     return (
         <div
@@ -61,9 +106,8 @@ export default function ConfirmPaymentModal({
                             <h2 className="text-lg font-bold text-slate-900">
                                 Xác nhận thanh toán
                             </h2>
-
                             <p className="mt-1 text-sm text-slate-500">
-                                Kiểm tra thông tin trước khi xác nhận.
+                                Nhập tổng số tiền thực tế đã nhận từ khách.
                             </p>
                         </div>
                     </div>
@@ -76,9 +120,8 @@ export default function ConfirmPaymentModal({
                             <span className="text-sm text-slate-500">
                                 Mã booking
                             </span>
-
                             <span className="break-all text-right text-sm font-semibold text-slate-900">
-                                {payment.booking.bookingCode}
+                                {booking.bookingCode}
                             </span>
                         </div>
 
@@ -86,9 +129,8 @@ export default function ConfirmPaymentModal({
                             <span className="text-sm text-slate-500">
                                 Khách hàng
                             </span>
-
                             <span className="text-right text-sm font-medium text-slate-800">
-                                {payment.booking.customerName}
+                                {booking.customerName}
                             </span>
                         </div>
 
@@ -96,60 +138,134 @@ export default function ConfirmPaymentModal({
                             <span className="text-sm text-slate-500">
                                 Số điện thoại
                             </span>
-
                             <span className="text-right text-sm font-medium text-slate-800">
-                                {payment.booking.customerPhone}
-                            </span>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between gap-3">
-                            <span className="text-sm text-slate-500">
-                                Mã giao dịch
-                            </span>
-
-                            <span className="max-w-[60%] break-all text-right text-sm font-medium text-slate-800">
-                                {payment.transactionCode || 'Không có'}
+                                {booking.customerPhone}
                             </span>
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-                        <p className="text-sm font-medium text-green-800">
-                            Số tiền khách báo chuyển
+                    {/* Tổng quan thanh toán */}
+                    <div className="rounded-xl border border-slate-200 p-4">
+                        <p className="mb-3 text-sm font-semibold text-slate-800">
+                            Tổng quan booking
                         </p>
 
-                        <p className="mt-2 text-2xl font-bold text-green-700">
-                            {formatCurrency(payment.amount)}
-                        </p>
-
-                        <div className="mt-4 space-y-2 border-t border-green-200 pt-3">
+                        <div className="space-y-3">
                             <div className="flex items-center justify-between gap-3 text-sm">
-                                <span className="text-green-800">
+                                <span className="text-slate-500">
                                     Tổng tiền booking
                                 </span>
+                                <span className="font-semibold text-slate-900">
+                                    {formatCurrency(totalAmount)}
+                                </span>
+                            </div>
 
-                                <span className="font-medium text-green-900">
-                                    {formatCurrency(payment.booking.totalAmount)}
+                            <div className="flex items-center justify-between gap-3 text-sm">
+                                <span className="text-slate-500">
+                                    Tiền cọc tối thiểu
+                                </span>
+                                <span className="font-medium text-slate-800">
+                                    {formatCurrency(depositAmount)}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3 text-sm">
+                                <span className="text-slate-500">
+                                    Đã ghi nhận trước đó
+                                </span>
+                                <span className="font-semibold text-green-700">
+                                    {formatCurrency(currentPaidAmount)}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3 text-sm">
+                                <span className="font-medium text-slate-700">
+                                    Còn phải thu
+                                </span>
+                                <span className="font-bold text-amber-700">
+                                    {formatCurrency(remainingAmount)}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Nhập tổng tiền lũy kế */}
+                    <div className="space-y-2">
+                        <label
+                            htmlFor="cumulative-paid-amount"
+                            className="block text-sm font-semibold text-slate-800"
+                        >
+                            Số tiền đã thanh toán thực tế
+                        </label>
+
+                        <div className="relative">
+                            <input
+                                id="cumulative-paid-amount"
+                                type="text"
+                                inputMode="numeric"
+                                value={paidAmountInput.replace(
+                                    /\B(?=(\d{3})+(?!\d))/g,
+                                    ',',
+                                )}
+                                onChange={(event) => {
+                                    setPaidAmountInput(
+                                        event.target.value.replace(/\D/g, ''),
+                                    );
+                                }}
+                                placeholder="Nhập tổng tiền đã nhận"
+                                disabled={loading}
+                                className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-16 text-lg font-bold text-slate-900 outline-none transition placeholder:text-sm placeholder:font-normal focus:border-green-500 focus:ring-2 focus:ring-green-100 disabled:bg-slate-100"
+                            />
+
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-slate-500">
+                                VNĐ
+                            </span>
+                        </div>
+
+                        <p className="text-xs leading-5 text-slate-500">
+                            Nhập tổng tiền đã nhận từ trước đến hiện tại, bao gồm
+                            tất cả các lần khách chuyển khoản. Không nhập riêng
+                            số tiền của lần chuyển mới nhất.
+                        </p>
+
+                        {validationMessage && (
+                            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                                {validationMessage}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Kết quả sau xác nhận */}
+                    <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+                        <p className="text-sm font-semibold text-green-800">
+                            Dự kiến sau khi xác nhận
+                        </p>
+
+                        <div className="mt-3 space-y-2">
+                            <div className="flex items-center justify-between gap-3 text-sm">
+                                <span className="text-green-800">
+                                    Tổng tiền đã nhận
+                                </span>
+                                <span className="font-bold text-green-900">
+                                    {formatCurrency(newPaidAmount)}
                                 </span>
                             </div>
 
                             <div className="flex items-center justify-between gap-3 text-sm">
                                 <span className="text-green-800">
-                                    Đã thanh toán trước đó
+                                    Số tiền ghi nhận thêm
                                 </span>
-
-                                <span className="font-medium text-green-900">
-                                    {formatCurrency(payment.booking.paidAmount)}
+                                <span className="font-semibold text-green-900">
+                                    {formatCurrency(additionalAmount)}
                                 </span>
                             </div>
 
-                            <div className="flex items-center justify-between gap-3 text-sm">
+                            <div className="flex items-center justify-between gap-3 border-t border-green-200 pt-2 text-sm">
                                 <span className="font-semibold text-green-800">
                                     Còn phải thanh toán
                                 </span>
-
                                 <span className="font-bold text-green-900">
-                                    {formatCurrency(remainingAmount)}
+                                    {formatCurrency(newRemainingAmount)}
                                 </span>
                             </div>
                         </div>
@@ -171,7 +287,9 @@ export default function ConfirmPaymentModal({
                         </svg>
 
                         <p className="text-sm leading-5 text-amber-800">
-                            Chỉ xác nhận khi đã kiểm tra tiền thực tế vào tài khoản ngân hàng. Thao tác này sẽ cập nhật trạng thái thanh toán và booking.
+                            Chỉ xác nhận sau khi kiểm tra tiền thực tế đã vào tài
+                            khoản ngân hàng. Hệ thống sẽ cập nhật số tiền đã thanh
+                            toán, trạng thái booking và xuất vé nếu đủ điều kiện.
                         </p>
                     </div>
                 </div>
@@ -189,8 +307,8 @@ export default function ConfirmPaymentModal({
 
                     <button
                         type="button"
-                        disabled={loading}
-                        onClick={onConfirm}
+                        disabled={!canConfirm}
+                        onClick={() => onConfirm(newPaidAmount)}
                         className="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                         {loading && (

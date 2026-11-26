@@ -231,7 +231,7 @@ export type ConfirmPaymentModalProps = {
     payment: PaymentListItem | null;
     open: boolean;
     loading: boolean;
-    onConfirm: () => void;
+    onConfirm: (paidAmount: number) => void;
     onClose: () => void;
 };
 
@@ -246,3 +246,19 @@ export type RejectPaymentModalProps = {
 
 // Kiểu dữ liệu Toast dùng trong module thanh toán.
 export type PaymentToastType = 'success' | 'error';
+
+// Payload gửi lên khi quản trị viên xác nhận tổng tiền thực tế đã nhận.
+export type ConfirmBookingPaymentPayload = {
+    paidAmount: number;
+};
+
+// Response API PATCH /payments/bookings/:bookingId/confirm-total.
+export type ConfirmBookingPaymentResponse = {
+    message: string;
+    bookingId: string;
+    paidAmount: number;
+    additionalAmount: number;
+    remainingAmount: number;
+    paymentStatus: PaymentStatus;
+    bookingStatus: BookingStatus;
+};

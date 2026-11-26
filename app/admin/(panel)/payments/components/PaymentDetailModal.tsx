@@ -444,7 +444,7 @@ export default function PaymentDetailModal({
 
                             <div className="flex items-center justify-between gap-3 text-sm">
                                 <span className="text-slate-500">
-                                    Tiền đặt cọc yêu cầu
+                                    Thanh toán trước tối thiểu
                                 </span>
 
                                 <span className="font-medium text-slate-800">

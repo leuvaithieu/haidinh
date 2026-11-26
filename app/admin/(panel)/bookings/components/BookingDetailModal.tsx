@@ -432,16 +432,6 @@ export default function BookingDetailModal({
 
                                     <div className="flex items-center justify-between gap-3">
                                         <span className="text-sm text-gray-500">
-                                            Tiền đặt cọc
-                                        </span>
-
-                                        <span className="text-sm font-medium text-gray-800">
-                                            {formatCurrency(booking.depositAmount)}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex items-center justify-between gap-3">
-                                        <span className="text-sm text-gray-500">
                                             Đã thanh toán
                                         </span>
 

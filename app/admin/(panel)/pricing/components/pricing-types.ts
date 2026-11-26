@@ -68,6 +68,22 @@ export type RoutePriceOverride = {
     price: number | null;
 };
 
+// Một mức giá Tết áp dụng cho một ngày khởi hành.
+export type TetDailyPrice = {
+    id: string;
+    policyId: string;
+    departureDate: string;
+    price: number;
+    createdAt?: string;
+    updatedAt?: string;
+};
+
+// Dữ liệu một mức giá Tết nhập từ giao diện.
+export type TetDailyPriceInput = {
+    departureDate: string;
+    price: string;
+};
+
 // Một chính sách giá trong danh sách quản trị.
 export type PricingPolicy = {
     id: string;
@@ -84,6 +100,7 @@ export type PricingPolicy = {
     effectiveTo: string | null;
     fullRoutePrice: number | null;
     routeAdjustmentAmount: number;
+    tetDailyPrices?: TetDailyPrice[];
     createdAt: string;
     updatedAt: string;
 };
@@ -98,6 +115,7 @@ export type PricingPolicyDetail = PricingPolicy & {
     routePointPrices: RoutePointPrice[];
     servicePointPrices: ServicePointPrice[];
     priceOverrides: RoutePriceOverride[];
+    tetDailyPrices: TetDailyPrice[];
 };
 
 // Dữ liệu thông báo dùng chung trong module Pricing.

@@ -9,6 +9,7 @@ import { createPricingPolicy } from '../lib/pricing-api';
 import type {
     PricingMode,
     TripDirection,
+    TetDailyPriceInput,
 } from './pricing-types';
 
 import type { Route } from '../../routes/components/route-types';
@@ -39,9 +40,12 @@ export default function PricingPolicyForm({
     const [effectiveFrom, setEffectiveFrom] = useState('');
     const [effectiveTo, setEffectiveTo] = useState('');
 
-    const [fullRoutePrice, setFullRoutePrice] = useState('');
     const [routeAdjustmentAmount, setRouteAdjustmentAmount] =
         useState('0');
+
+    const [tetDailyPrices, setTetDailyPrices] = useState<
+        TetDailyPriceInput[]
+    >([{ departureDate: '', price: '' }]);
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,6 +122,36 @@ export default function PricingPolicyForm({
         setBaseOriginRoutePointId('');
     }
 
+    // Thêm một dòng cấu hình giá Tết theo ngày khởi hành.
+    function handleAddTetDailyPrice() {
+        setTetDailyPrices((current) => [
+            ...current,
+            { departureDate: '', price: '' },
+        ]);
+    }
+
+    // Cập nhật ngày hoặc giá của một dòng cấu hình Tết.
+    function handleTetDailyPriceChange(
+        index: number,
+        field: keyof TetDailyPriceInput,
+        value: string,
+    ) {
+        setTetDailyPrices((current) =>
+            current.map((item, itemIndex) =>
+                itemIndex === index
+                    ? { ...item, [field]: value }
+                    : item,
+            ),
+        );
+    }
+
+    // Xóa một dòng cấu hình giá Tết.
+    function handleRemoveTetDailyPrice(index: number) {
+        setTetDailyPrices((current) =>
+            current.filter((_, itemIndex) => itemIndex !== index),
+        );
+    }
+
     // Kiểm tra dữ liệu và gửi yêu cầu tạo chính sách giá.
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -128,7 +162,11 @@ export default function PricingPolicyForm({
             return;
         }
 
-        if (!version || !Number.isInteger(Number(version)) || Number(version) < 1) {
+        if (
+            !version ||
+            !Number.isInteger(Number(version)) ||
+            Number(version) < 1
+        ) {
             setError('Phiên bản phải là số nguyên lớn hơn hoặc bằng 1');
             return;
         }
@@ -148,16 +186,51 @@ export default function PricingPolicyForm({
         }
 
         if (pricingMode === 'NORMAL' && !baseOriginRoutePointId) {
-            setError('Chính sách NORMAL bắt buộc phải chọn điểm xuất phát gốc');
+            setError(
+                'Chính sách NORMAL bắt buộc phải chọn điểm xuất phát gốc',
+            );
             return;
         }
 
         if (pricingMode === 'TET') {
-            const price = Number(fullRoutePrice);
-
-            if (!Number.isInteger(price) || price <= 0) {
-                setError('Giá toàn tuyến Tết phải là số nguyên lớn hơn 0');
+            if (!vehicleType) {
+                setError('Chính sách Tết bắt buộc phải chọn loại xe');
                 return;
+            }
+
+            if (tetDailyPrices.length === 0) {
+                setError('Vui lòng thêm ít nhất một ngày có giá Tết');
+                return;
+            }
+
+            const usedDates = new Set<string>();
+
+            for (let index = 0; index < tetDailyPrices.length; index++) {
+                const item = tetDailyPrices[index];
+                const price = Number(item.price);
+
+                if (!item.departureDate) {
+                    setError(
+                        `Vui lòng chọn ngày khởi hành ở dòng ${index + 1}`,
+                    );
+                    return;
+                }
+
+                if (!Number.isInteger(price) || price <= 0) {
+                    setError(
+                        `Giá vé ở dòng ${index + 1} phải là số nguyên lớn hơn 0`,
+                    );
+                    return;
+                }
+
+                if (usedDates.has(item.departureDate)) {
+                    setError(
+                        `Ngày ${item.departureDate} đang bị trùng`,
+                    );
+                    return;
+                }
+
+                usedDates.add(item.departureDate);
             }
         }
 
@@ -188,14 +261,18 @@ export default function PricingPolicyForm({
                 effectiveTo: effectiveTo
                     ? new Date(effectiveTo).toISOString()
                     : null,
-                fullRoutePrice:
-                    pricingMode === 'TET'
-                        ? Number(fullRoutePrice)
-                        : null,
                 routeAdjustmentAmount:
                     pricingMode === 'NORMAL'
                         ? adjustment
                         : 0,
+                ...(pricingMode === 'TET'
+                    ? {
+                          tetDailyPrices: tetDailyPrices.map((item) => ({
+                              departureDate: item.departureDate,
+                              price: Number(item.price),
+                          })),
+                      }
+                    : {}),
             });
 
             await onSuccess('Tạo bản nháp chính sách giá thành công!');
@@ -283,8 +360,8 @@ export default function PricingPolicyForm({
                                                 event.target.value as PricingMode,
                                             );
                                             setBaseOriginRoutePointId('');
-                                            setFullRoutePrice('');
                                             setRouteAdjustmentAmount('0');
+                                            setError('');
                                         }}
                                         className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-red-500"
                                     >
@@ -324,6 +401,9 @@ export default function PricingPolicyForm({
                             <div>
                                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
                                     Phạm vi loại xe
+                                    {pricingMode === 'TET' && (
+                                        <span className="ml-1 text-red-600">*</span>
+                                    )}
                                 </label>
 
                                 <select
@@ -331,10 +411,13 @@ export default function PricingPolicyForm({
                                     onChange={(event) =>
                                         setVehicleType(event.target.value)
                                     }
+                                    required={pricingMode === 'TET'}
                                     className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm outline-none focus:border-red-500"
                                 >
                                     <option value="">
-                                        Áp dụng cho tất cả loại xe
+                                        {pricingMode === 'TET'
+                                            ? 'Chọn loại xe'
+                                            : 'Áp dụng cho tất cả loại xe'}
                                     </option>
                                     {vehicleTypes.map((type) => (
                                         <option key={type} value={type}>
@@ -344,7 +427,9 @@ export default function PricingPolicyForm({
                                 </select>
 
                                 <p className="mt-1 text-xs text-slate-500">
-                                    Để trống nếu chính sách áp dụng chung cho mọi loại xe.
+                                    {pricingMode === 'TET'
+                                        ? 'Mỗi chính sách Tết áp dụng cho một loại xe cụ thể.'
+                                        : 'Để trống nếu chính sách NORMAL áp dụng chung cho mọi loại xe.'}
                                 </p>
                             </div>
                         </section>
@@ -421,27 +506,96 @@ export default function PricingPolicyForm({
                                     </div>
                                 </>
                             ) : (
-                                <div>
-                                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                                        Giá toàn tuyến (VNĐ)
-                                    </label>
+                                <div className="space-y-4">
+                                    <div className="rounded-xl border border-red-100 bg-red-50 p-4">
+                                        <p className="text-sm font-semibold text-red-800">
+                                            Bảng giá Tết theo ngày khởi hành
+                                        </p>
+                                        <p className="mt-1 text-xs leading-5 text-red-700">
+                                            Nhập giá toàn tuyến cho từng ngày.
+                                            Mỗi ngày chỉ được khai báo một mức giá
+                                            trong chính sách này.
+                                        </p>
+                                    </div>
 
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        step="1"
-                                        value={fullRoutePrice}
-                                        onChange={(event) =>
-                                            setFullRoutePrice(event.target.value)
-                                        }
-                                        required
-                                        placeholder="Nhập giá vé toàn tuyến"
-                                        className="w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
-                                    />
+                                    <div className="space-y-3">
+                                        {tetDailyPrices.map((item, index) => (
+                                            <div
+                                                key={index}
+                                                className="grid grid-cols-1 items-end gap-3 rounded-xl border border-slate-200 p-3 sm:grid-cols-[1fr_1fr_auto]"
+                                            >
+                                                <div>
+                                                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                                                        Ngày khởi hành
+                                                    </label>
 
-                                    <p className="mt-1 text-xs text-slate-500">
-                                        Chính sách Tết sử dụng giá toàn tuyến,
-                                        không cấu hình giá từng điểm hoặc Override.
+                                                    <input
+                                                        type="date"
+                                                        value={item.departureDate}
+                                                        onChange={(event) =>
+                                                            handleTetDailyPriceChange(
+                                                                index,
+                                                                'departureDate',
+                                                                event.target.value,
+                                                            )
+                                                        }
+                                                        required
+                                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">
+                                                        Giá vé (VNĐ)
+                                                    </label>
+
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        step="1"
+                                                        value={item.price}
+                                                        onChange={(event) =>
+                                                            handleTetDailyPriceChange(
+                                                                index,
+                                                                'price',
+                                                                event.target.value,
+                                                            )
+                                                        }
+                                                        required
+                                                        placeholder="Ví dụ: 2200000"
+                                                        className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleRemoveTetDailyPrice(index)
+                                                    }
+                                                    disabled={tetDailyPrices.length === 1}
+                                                    title="Xóa ngày giá này"
+                                                    className="h-10 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                                                >
+                                                    Xóa
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={handleAddTetDailyPrice}
+                                        className="inline-flex items-center gap-2 rounded-lg border border-dashed border-red-300 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                                    >
+                                        <span className="text-lg leading-none">+</span>
+                                        Thêm ngày giá
+                                    </button>
+
+                                    <p className="text-xs leading-5 text-slate-500">
+                                        Giá được áp dụng theo ngày khởi hành và
+                                        loại xe đã chọn. Nếu ngày khởi hành không
+                                        có giá được khai báo, hệ thống sẽ yêu cầu
+                                        khách liên hệ nhân viên.
                                     </p>
                                 </div>
                             )}
@@ -529,7 +683,11 @@ export default function PricingPolicyForm({
 
                             <button
                                 type="submit"
-                                disabled={isSubmitting || isLoading || routes.length === 0}
+                                disabled={
+                                    isSubmitting ||
+                                    isLoading ||
+                                    routes.length === 0
+                                }
                                 className="w-full rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                             >
                                 {isSubmitting

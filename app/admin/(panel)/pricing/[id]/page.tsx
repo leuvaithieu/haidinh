@@ -376,24 +376,96 @@ export default function PricingPolicyDetailPage() {
                 </div>
             </section>
 
+            
             {policy.pricingMode === 'TET' ? (
-                <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <h2 className="font-semibold text-slate-900">
-                        Giá vé Tết toàn tuyến
-                    </h2>
+                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <div className="flex flex-col gap-2 border-b border-slate-200 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 className="font-semibold text-slate-900">
+                                Bảng giá Tết theo ngày khởi hành
+                            </h2>
+                            <p className="mt-1 text-xs text-slate-500">
+                                Giá vé toàn tuyến theo từng ngày, loại xe và chiều chạy.
+                            </p>
+                        </div>
 
-                    <p className="mt-4 text-3xl font-bold text-red-600">
-                        {policy.fullRoutePrice != null
-                            ? `${policy.fullRoutePrice.toLocaleString('vi-VN')} đ`
-                            : 'Chưa cấu hình'}
-                    </p>
+                        <span className="w-fit rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700">
+                            {policy.tetDailyPrices?.length ?? 0} ngày áp dụng giá
+                        </span>
+                    </div>
 
-                    <p className="mt-2 text-sm text-slate-500">
-                        Chính sách Tết sử dụng giá toàn tuyến, không cấu hình
-                        giá RoutePoint, ServicePoint hoặc Override.
-                    </p>
+                    {policy.tetDailyPrices?.length ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full min-w-[500px] text-left text-sm">
+                                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                                    <tr>
+                                        <th className="px-5 py-3 font-semibold">
+                                            STT
+                                        </th>
+                                        <th className="px-5 py-3 font-semibold">
+                                            Ngày khởi hành
+                                        </th>
+                                        <th className="px-5 py-3 text-right font-semibold">
+                                            Giá vé
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody className="divide-y divide-slate-100">
+                                    {[...policy.tetDailyPrices]
+                                        .sort(
+                                            (a, b) =>
+                                                a.departureDate.localeCompare(
+                                                    b.departureDate,
+                                                ),
+                                        )
+                                        .map((item, index) => (
+                                            <tr
+                                                key={item.id}
+                                                className="transition hover:bg-slate-50"
+                                            >
+                                                <td className="px-5 py-4 text-slate-500">
+                                                    {index + 1}
+                                                </td>
+
+                                                <td className="px-5 py-4 font-medium text-slate-800">
+                                                    {item.departureDate
+                                                        .slice(0, 10)
+                                                        .split('-')
+                                                        .reverse()
+                                                        .join('/')}
+                                                </td>
+
+                                                <td className="px-5 py-4 text-right font-bold tabular-nums text-red-600">
+                                                    {item.price.toLocaleString('vi-VN')} đ
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="p-8 text-center">
+                            <CalendarDays
+                                size={30}
+                                className="mx-auto mb-3 text-slate-300"
+                            />
+                            <p className="font-medium text-slate-700">
+                                Chưa có ngày giá Tết
+                            </p>
+                            <p className="mt-1 text-sm text-slate-500">
+                                Chính sách chưa được cấu hình giá theo ngày khởi hành.
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="border-t border-slate-100 bg-slate-50 px-5 py-3 text-xs leading-5 text-slate-500">
+                        Giá Tết áp dụng cho hành trình toàn tuyến.
+                        Ngày không có giá cấu hình sẽ yêu cầu khách liên hệ nhân viên.
+                    </div>
                 </section>
             ) : (
+
                 <>
                     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                         <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">

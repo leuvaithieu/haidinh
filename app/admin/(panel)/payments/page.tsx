@@ -46,8 +46,9 @@ export default function PaymentsPage() {
     const [isConfirmSubmitting, setIsConfirmSubmitting] = useState(false);
     const [isRejectSubmitting, setIsRejectSubmitting] = useState(false);
 
-    const isAuthorized =
-        currentUserRole === 'ADMIN' || currentUserRole === 'STAFF';
+    const isAuthorized = currentUserRole === 'ADMIN' || currentUserRole === 'STAFF';
+
+    const isAdmin = currentUserRole === 'ADMIN';
 
     // Lấy thông tin tài khoản hiện tại để xác định quyền truy cập module.
     async function getCurrentUser() {
@@ -160,24 +161,28 @@ export default function PaymentsPage() {
         setSelectedPayment(null);
     }
 
-    // Mở modal xác nhận giao dịch thanh toán.
+    // Mở modal xác nhận tổng số tiền lũy kế, chỉ dành cho ADMIN.
     function handleRequestConfirm(payment: PaymentListItem) {
-        if (!isAuthorized) return;
+        if (!isAdmin) return;
 
         setPaymentToConfirm(payment);
     }
 
-    // Gửi yêu cầu xác nhận đã nhận tiền đến backend.
-    async function handleConfirmPayment() {
-        if (!paymentToConfirm || !isAuthorized) return;
+    // Gửi tổng số tiền lũy kế thực tế đã nhận đến backend.
+    async function handleConfirmPayment(paidAmount: number) {
+        if (!paymentToConfirm || !isAdmin) return;
 
         setIsConfirmSubmitting(true);
 
         try {
             const response = await apiFetch(
-                `/payments/${paymentToConfirm.id}/confirm`,
+                `/payments/bookings/${paymentToConfirm.booking.id}/confirm-total`,
                 {
                     method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ paidAmount }),
                 },
             );
 
@@ -219,6 +224,14 @@ export default function PaymentsPage() {
         if (!isAuthorized) return;
 
         setPaymentToReject(payment);
+    }
+
+    // Chuyển từ modal xác nhận sang modal nhập lý do từ chối.
+    function handleRejectFromConfirm() {
+        if (!paymentToConfirm || !isAuthorized) return;
+
+        setPaymentToReject(paymentToConfirm);
+        setPaymentToConfirm(null);
     }
 
     // Gửi yêu cầu từ chối giao dịch kèm lý do đến backend.
@@ -312,6 +325,7 @@ export default function PaymentsPage() {
                     onView={handleViewDetail}
                     onConfirm={handleRequestConfirm}
                     onReject={handleRequestReject}
+                    canConfirm={isAdmin}
                 />
             )}
 

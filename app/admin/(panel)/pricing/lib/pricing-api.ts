@@ -38,6 +38,12 @@ export type RoutePriceOverridePayload = {
     price?: number | null;
 };
 
+// Dữ liệu một mức giá Tết theo ngày gửi lên BE.
+export type TetDailyPricePayload = {
+    departureDate: string;
+    price: number;
+};
+
 // Dữ liệu tạo hoặc cập nhật chính sách giá.
 export type PricingPolicyPayload = {
     routeId: string;
@@ -53,6 +59,7 @@ export type PricingPolicyPayload = {
     routePointPrices?: RoutePointPricePayload[];
     servicePointPrices?: ServicePointPricePayload[];
     priceOverrides?: RoutePriceOverridePayload[];
+    tetDailyPrices?: TetDailyPricePayload[];
 };
 
 // Xử lý response từ BE và trả về dữ liệu hoặc thông báo lỗi.

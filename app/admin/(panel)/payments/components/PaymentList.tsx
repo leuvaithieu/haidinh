@@ -107,11 +107,13 @@ function PaymentCard({
     onView,
     onConfirm,
     onReject,
+    canConfirm,
 }: {
     payment: PaymentListItem;
     onView: (payment: PaymentListItem) => void;
     onConfirm: (payment: PaymentListItem) => void;
     onReject: (payment: PaymentListItem) => void;
+    canConfirm: boolean;
 }) {
     return (
         <div
@@ -144,22 +146,36 @@ function PaymentCard({
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <p className="text-xs text-slate-500">
-                        Số tiền báo chuyển
+                        Đã thanh toán
                     </p>
 
-                    <p className="mt-1 text-base font-bold text-red-600">
-                        {formatCurrency(payment.amount)}
+                    <p className="mt-1 text-base font-bold text-green-700">
+                        {formatCurrency(payment.booking.paidAmount)}
                     </p>
                 </div>
 
                 <div>
                     <p className="text-xs text-slate-500">
-                        Thời gian báo
+                        Còn phải thu
                     </p>
 
-                    <p className="mt-1 text-sm font-medium text-slate-800">
-                        {formatDateTime(payment.reportedAt)}
+                    <p className="mt-1 text-base font-bold text-amber-700">
+                        {formatCurrency(
+                            Math.max(
+                                payment.booking.totalAmount - payment.booking.paidAmount,
+                                0,
+                            ),
+                        )}
                     </p>
+                </div>
+            </div>
+
+            <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-slate-500">Tổng tiền booking</span>
+                    <span className="font-semibold text-slate-800">
+                        {formatCurrency(payment.booking.totalAmount)}
+                    </span>
                 </div>
             </div>
 
@@ -207,22 +223,26 @@ function PaymentCard({
                 </button>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-2">
-                <button
-                    type="button"
-                    onClick={() => onConfirm(payment)}
-                    className="rounded-lg bg-green-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700"
-                >
-                    Xác nhận
-                </button>
+            <div className="mt-4 flex gap-2">
+                {canConfirm && (
+                    <button
+                        type="button"
+                        onClick={() => onConfirm(payment)}
+                        className="flex-1 rounded-lg bg-green-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700"
+                    >
+                        Xác nhận
+                    </button>
+                )}
 
-                <button
-                    type="button"
-                    onClick={() => onReject(payment)}
-                    className="rounded-lg border border-red-200 bg-white px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-                >
-                    Từ chối
-                </button>
+                {payment.isOverdue && (
+                    <button
+                        type="button"
+                        onClick={() => onReject(payment)}
+                        className="flex-1 rounded-lg border border-red-200 bg-white px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                    >
+                        Hủy yêu cầu
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -235,7 +255,8 @@ export default function PaymentList({
     onView,
     onConfirm,
     onReject,
-}: PaymentListProps) {
+    canConfirm = false,
+}: PaymentListProps & { canConfirm?: boolean }) {
     if (loading) {
         return (
             <div className="space-y-3">
@@ -300,6 +321,7 @@ export default function PaymentList({
                         onView={onView}
                         onConfirm={onConfirm}
                         onReject={onReject}
+                        canConfirm={canConfirm}
                     />
                 ))}
             </div>
@@ -373,12 +395,21 @@ export default function PaymentList({
                                     </td>
 
                                     <td className="px-4 py-4">
-                                        <p className="whitespace-nowrap text-sm font-bold text-slate-900">
-                                            {formatCurrency(payment.amount)}
+                                        <p className="whitespace-nowrap text-sm font-bold text-green-700">
+                                            Đã trả: {formatCurrency(payment.booking.paidAmount)}
                                         </p>
 
-                                        <p className="mt-1 text-xs text-slate-500">
-                                            Tổng số tiền: {formatCurrency(payment.booking.totalAmount)}
+                                        <p className="mt-1 whitespace-nowrap text-xs text-amber-700">
+                                            Còn thiếu: {formatCurrency(
+                                                Math.max(
+                                                    payment.booking.totalAmount - payment.booking.paidAmount,
+                                                    0,
+                                                ),
+                                            )}
+                                        </p>
+
+                                        <p className="mt-1 whitespace-nowrap text-xs text-slate-500">
+                                            Tổng: {formatCurrency(payment.booking.totalAmount)}
                                         </p>
                                     </td>
 
@@ -418,6 +449,7 @@ export default function PaymentList({
                                                 Chi tiết
                                             </button>
 
+                                            {canConfirm && (
                                             <button
                                                 type="button"
                                                 onClick={() => onConfirm(payment)}
@@ -425,14 +457,16 @@ export default function PaymentList({
                                             >
                                                 Xác nhận
                                             </button>
-
+                                            )}
+                                            {payment.isOverdue && (
                                             <button
                                                 type="button"
                                                 onClick={() => onReject(payment)}
                                                 className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
                                             >
-                                                Từ chối
+                                                Hủy yêu cầu
                                             </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

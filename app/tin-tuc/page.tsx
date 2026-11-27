@@ -34,25 +34,48 @@ type PageProps = {
   }>;
 };
 
+
 async function getArticles(page: number): Promise<ArticleResponse> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
+
+  const emptyResult: ArticleResponse = {
+    items: [],
+    meta: {
+      total: 0,
+      page,
+      limit: 9,
+      totalPages: 0,
+    },
+  };
 
   if (!apiUrl) {
-    throw new Error("Chưa cấu hình NEXT_PUBLIC_API_URL");
+    console.error("Chưa cấu hình NEXT_PUBLIC_API_URL");
+    return emptyResult;
   }
 
-  const response = await fetch(
-    `${apiUrl}/public/articles?page=${page}&limit=9`,
-    {
-      next: { revalidate: 60 },
-    },
-  );
+  try {
+    const response = await fetch(
+      `${apiUrl}/public/articles?page=${page}&limit=9`,
+      {
+        next: { revalidate: 60 },
+      },
+    );
 
-  if (!response.ok) {
-    throw new Error("Không thể tải danh sách tin tức");
+    if (!response.ok) {
+      console.error("Không thể tải danh sách tin tức:", response.status);
+      return emptyResult;
+    }
+
+    const result: ArticleResponse = await response.json();
+
+    return {
+      items: Array.isArray(result.items) ? result.items : [],
+      meta: result.meta ?? emptyResult.meta,
+    };
+  } catch (error) {
+    console.error("Lỗi kết nối API tin tức:", error);
+    return emptyResult;
   }
-
-  return response.json();
 }
 
 function getImageUrl(image: string | null): string {

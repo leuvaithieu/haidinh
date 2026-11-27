@@ -89,7 +89,35 @@ export default function BookingByDate({
                 throw new Error('Dữ liệu booking theo ngày không hợp lệ');
             }
 
-            onDataLoaded(result);
+            // Lọc booking PENDING đã hết hạn giữ chỗ trước khi hiển thị.
+            const now = Date.now();
+
+            const filteredData: BookingByDateResponse = {
+                ...result,
+                data: result.data
+                    .map((group) => {
+                        const activeBookings = group.bookings.filter((booking) => {
+                            const isExpiredPending =
+                                booking.status === 'PENDING' &&
+                                booking.holdExpiresAt !== null &&
+                                new Date(booking.holdExpiresAt).getTime() <= now;
+
+                            return !isExpiredPending;
+                        });
+
+                        return {
+                            ...group,
+                            bookings: activeBookings,
+                            bookingCount: activeBookings.length,
+                        };
+                    })
+                    .filter((group) => group.bookings.length > 0),
+            };
+
+            onDataLoaded({
+                ...filteredData,
+                totalTrips: filteredData.data.length,
+            });
         } catch (err) {
             setError(
                 err instanceof Error

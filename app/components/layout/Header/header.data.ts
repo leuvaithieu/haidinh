@@ -1,3 +1,4 @@
+
 import {
   House,
   Bus,
@@ -5,9 +6,10 @@ import {
   Newspaper,
   Phone,
   Info,
+  Search,
 } from "lucide-react";
 
-export const HOTLINE = "0982561204";
+export const HOTLINE = "0982113878";
 
 export const NAV_ITEMS = [
   {
@@ -29,6 +31,11 @@ export const NAV_ITEMS = [
     title: "Đặt vé",
     href: "/dat-ve",
     icon: Ticket,
+  },
+  {
+    title: "Tra cứu vé",
+    href: "/tra-cuu-ve",
+    icon: Search,
   },
   {
     title: "Tin tức",

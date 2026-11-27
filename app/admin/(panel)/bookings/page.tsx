@@ -145,8 +145,23 @@ export default function BookingsPage() {
                 throw new Error('Dữ liệu booking trả về không hợp lệ');
             }
 
-            setBookings(data.data);
-            setPagination(data.pagination);
+            // Chỉ hiển thị booking còn hiệu lực trong danh sách quản lý.
+            const now = Date.now();
+
+            const activeBookings = data.data.filter((booking) => {
+                const isExpiredPending =
+                    booking.status === 'PENDING' &&
+                    booking.holdExpiresAt !== null &&
+                    new Date(booking.holdExpiresAt).getTime() <= now;
+
+                return !isExpiredPending;
+            });
+
+            setBookings(activeBookings);
+            setPagination({
+                ...data.pagination,
+                total: Math.max(0, data.pagination.total - (data.data.length - activeBookings.length)),
+            });
         } catch (error) {
             setBookings([]);
 

@@ -156,13 +156,13 @@ export default async function ArticleDetailPage({
           </p>
         )}
 
-        {article.coverImage && (
+        <div className="mt-8 aspect-video w-full overflow-hidden rounded-2xl bg-gray-100">
           <img
             src={getImageUrl(article.coverImage)}
             alt={article.title}
-            className="mt-8 aspect-video w-full rounded-2xl object-cover"
+            className="h-full w-full object-cover"
           />
-        )}
+      </div>
 
         <div className="mt-10 whitespace-pre-wrap break-words text-base leading-8 text-gray-800">
           {article.content}

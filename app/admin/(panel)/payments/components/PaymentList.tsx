@@ -223,26 +223,22 @@ function PaymentCard({
                 </button>
             </div>
 
-            <div className="mt-4 flex gap-2">
-                {canConfirm && (
-                    <button
-                        type="button"
-                        onClick={() => onConfirm(payment)}
-                        className="flex-1 rounded-lg bg-green-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700"
-                    >
-                        Xác nhận
-                    </button>
-                )}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+                <button
+                    type="button"
+                    onClick={() => onConfirm(payment)}
+                    className="rounded-lg bg-green-600 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-green-700"
+                >
+                    Xác nhận
+                </button>
 
-                {payment.isOverdue && (
-                    <button
-                        type="button"
-                        onClick={() => onReject(payment)}
-                        className="flex-1 rounded-lg border border-red-200 bg-white px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
-                    >
-                        Hủy yêu cầu
-                    </button>
-                )}
+                <button
+                    type="button"
+                    onClick={() => onReject(payment)}
+                    className="rounded-lg border border-red-200 bg-white px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                >
+                    Từ chối
+                </button>
             </div>
         </div>
     );
@@ -449,7 +445,6 @@ export default function PaymentList({
                                                 Chi tiết
                                             </button>
 
-                                            {canConfirm && (
                                             <button
                                                 type="button"
                                                 onClick={() => onConfirm(payment)}
@@ -457,16 +452,14 @@ export default function PaymentList({
                                             >
                                                 Xác nhận
                                             </button>
-                                            )}
-                                            {payment.isOverdue && (
+
                                             <button
                                                 type="button"
                                                 onClick={() => onReject(payment)}
                                                 className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
                                             >
-                                                Hủy yêu cầu
+                                                Từ chối
                                             </button>
-                                            )}
                                         </div>
                                     </td>
                                 </tr>

@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Phone, Ticket } from "lucide-react";
+import { HOTLINE } from "@/app/components/layout/Header/header.data";
 
 export default function HeroContent() {
+  const formattedHotline = HOTLINE.replace(
+    /^(\d{4})(\d{3})(\d{3})$/,
+    "$1 $2 $3",
+  );
   return (
     <div className="w-full py-5 sm:py-8 lg:py-10">
       <div className="max-w-2xl text-white">
@@ -49,7 +54,7 @@ export default function HeroContent() {
         </div>
 
         <a
-          href="tel:0237xxxxxxxx"
+          href={`tel:${HOTLINE}`}
           className="mt-6 inline-flex max-w-full items-center gap-3 rounded-2xl border border-white/15 bg-black/20 p-3 pr-5 backdrop-blur-md transition hover:bg-black/35 sm:mt-8 sm:p-3.5"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-600">
@@ -62,7 +67,7 @@ export default function HeroContent() {
             </span>
 
             <span className="mt-0.5 block text-base font-extrabold text-white sm:text-lg">
-              0237 xxx xxxx
+              {formattedHotline}
             </span>
           </span>
         </a>

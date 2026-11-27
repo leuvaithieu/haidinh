@@ -269,6 +269,13 @@ export default function SeatGrid({
                                             <div
                                                 key={seat.id}
                                                 className="group relative min-w-0"
+                                                style={{
+                                                    gridColumnStart: seat.column,
+                                                    transform:
+                                                        rowData.seats.length === 3 && seat.column === 2
+                                                            ? 'translateY(18px)'
+                                                            : undefined,
+                                                }}
                                             >
 
                                                 <button

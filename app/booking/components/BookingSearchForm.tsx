@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     CalendarDays,
     MapPin,
@@ -28,6 +28,20 @@ function getLocalDateString(date: Date): string {
     const day = String(date.getDate()).padStart(2, '0');
 
     return `${year}-${month}-${day}`;
+}
+
+// Sắp xếp các điểm trên tuyến theo chiều di chuyển.
+function getOrderedRoutePoints(
+    route: PublishedRoute | null,
+    direction: TripDirection,
+) {
+    const points = [...(route?.route.routePoints ?? [])];
+
+    return points.sort((a, b) =>
+        direction === 'OUTBOUND'
+            ? a.sequence - b.sequence
+            : b.sequence - a.sequence,
+    );
 }
 
 export default function BookingSearchForm({
@@ -57,17 +71,10 @@ export default function BookingSearchForm({
         [routes, selectedRouteId],
     );
 
-    const orderedRoutePoints = useMemo(() => {
-        const points = [
-            ...(selectedRoute?.route.routePoints ?? []),
-        ];
-
-        return points.sort((a, b) =>
-            direction === 'OUTBOUND'
-                ? a.sequence - b.sequence
-                : b.sequence - a.sequence,
-        );
-    }, [selectedRoute, direction]);
+    const orderedRoutePoints = useMemo(
+        () => getOrderedRoutePoints(selectedRoute, direction),
+        [selectedRoute, direction],
+    );
 
     const pickupPoint = orderedRoutePoints.find(
         (point) => point.id === pickupId,
@@ -85,8 +92,8 @@ export default function BookingSearchForm({
         return orderedRoutePoints.slice(pickupIndex + 1);
     }, [orderedRoutePoints, pickupId]);
 
-    // Tải danh sách tuyến đã được công khai trên website.
-    async function loadRoutes() {
+    // Tải danh sách tuyến công khai và tự thiết lập hành trình mặc định.
+    const loadRoutes = useCallback(async () => {
         setIsLoading(true);
         setError('');
 
@@ -95,9 +102,15 @@ export default function BookingSearchForm({
 
             setRoutes(data);
 
-            if (data.length > 0) {
-                setSelectedRouteId(data[0].route.id);
-            }
+            const firstRoute = data[0] ?? null;
+            const firstRoutePoints = getOrderedRoutePoints(
+                firstRoute,
+                'OUTBOUND',
+            );
+
+            setSelectedRouteId(firstRoute?.route.id ?? '');
+            setPickupId(firstRoutePoints[0]?.id ?? '');
+            setDropoffId(firstRoutePoints[1]?.id ?? '');
         } catch (error) {
             setError(
                 error instanceof Error
@@ -107,67 +120,58 @@ export default function BookingSearchForm({
         } finally {
             setIsLoading(false);
         }
-    }
-
-    // Khởi tạo dữ liệu tuyến khi component được hiển thị.
-    useEffect(() => {
-        void loadRoutes();
     }, []);
 
-    // Chọn tuyến và thiết lập lại hai điểm đón trả.
+    // Khởi tạo danh sách tuyến khi component được hiển thị.
+    useEffect(() => {
+        void loadRoutes();
+    }, [loadRoutes]);
+
+    // Chọn tuyến và thiết lập lại hai điểm đón trả hợp lệ.
     function handleRouteChange(routeId: string) {
+        const route =
+            routes.find((item) => item.route.id === routeId) ?? null;
+
+        const points = getOrderedRoutePoints(route, direction);
+
         setSelectedRouteId(routeId);
-
-        const route = routes.find(
-            (item) => item.route.id === routeId,
-        );
-
-        const points = [...(route?.route.routePoints ?? [])];
-
-        points.sort((a, b) =>
-            direction === 'OUTBOUND'
-                ? a.sequence - b.sequence
-                : b.sequence - a.sequence,
-        );
-
         setPickupId(points[0]?.id ?? '');
         setDropoffId(points[1]?.id ?? '');
+        setError('');
     }
 
-    // Đổi chiều di chuyển và đảo thứ tự các điểm tuyến tương ứng.
+    // Đổi chiều di chuyển và thiết lập lại điểm đón trả.
     function handleDirectionChange(
         nextDirection: TripDirection,
     ) {
-        setDirection(nextDirection);
-
-        const points = [
-            ...(selectedRoute?.route.routePoints ?? []),
-        ];
-
-        points.sort((a, b) =>
-            nextDirection === 'OUTBOUND'
-                ? a.sequence - b.sequence
-                : b.sequence - a.sequence,
+        const points = getOrderedRoutePoints(
+            selectedRoute,
+            nextDirection,
         );
 
+        setDirection(nextDirection);
         setPickupId(points[0]?.id ?? '');
         setDropoffId(points[1]?.id ?? '');
+        setError('');
     }
 
-    // Chọn điểm đón và tự điều chỉnh điểm trả hợp lệ tiếp theo.
+    // Chọn điểm đón và tự chọn điểm trả hợp lệ tiếp theo.
     function handlePickupChange(nextPickupId: string) {
-        setPickupId(nextPickupId);
-
         const pickupIndex = orderedRoutePoints.findIndex(
             (point) => point.id === nextPickupId,
         );
 
-        const nextDropoff = orderedRoutePoints[pickupIndex + 1];
+        const nextDropoff =
+            pickupIndex >= 0
+                ? orderedRoutePoints[pickupIndex + 1]
+                : undefined;
 
+        setPickupId(nextPickupId);
         setDropoffId(nextDropoff?.id ?? '');
+        setError('');
     }
 
-    // Kiểm tra dữ liệu và gửi yêu cầu tìm chuyến cho component cha.
+    // Kiểm tra dữ liệu tìm kiếm và gửi yêu cầu cho component cha.
     function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
@@ -188,6 +192,29 @@ export default function BookingSearchForm({
 
         if (!date) {
             setError('Vui lòng chọn ngày khởi hành');
+            return;
+        }
+
+        const today = getLocalDateString(new Date());
+
+        if (date < today) {
+            setError('Ngày khởi hành không được nằm trong quá khứ');
+            return;
+        }
+
+        const pickupIndex = orderedRoutePoints.findIndex(
+            (point) => point.id === pickupId,
+        );
+
+        const dropoffIndex = orderedRoutePoints.findIndex(
+            (point) => point.id === dropoffId,
+        );
+
+        if (
+            pickupIndex < 0 ||
+            dropoffIndex <= pickupIndex
+        ) {
+            setError('Thứ tự điểm đón và điểm trả không hợp lệ');
             return;
         }
 
@@ -294,7 +321,10 @@ export default function BookingSearchForm({
                             onChange={(event) =>
                                 handlePickupChange(event.target.value)
                             }
-                            disabled={!selectedRoute || orderedRoutePoints.length === 0}
+                            disabled={
+                                !selectedRoute ||
+                                orderedRoutePoints.length < 2
+                            }
                             className="min-h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm font-semibold text-gray-800 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             <option value="">Chọn điểm đón</option>
@@ -318,7 +348,10 @@ export default function BookingSearchForm({
                             onChange={(event) =>
                                 setDropoffId(event.target.value)
                             }
-                            disabled={!pickupPoint || dropoffOptions.length === 0}
+                            disabled={
+                                !pickupPoint ||
+                                dropoffOptions.length === 0
+                            }
                             className="min-h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm font-semibold text-gray-800 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-500/10 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             <option value="">Chọn điểm trả</option>
@@ -341,18 +374,31 @@ export default function BookingSearchForm({
                             type="date"
                             value={date}
                             min={getLocalDateString(new Date())}
-                            onChange={(event) =>
-                                setDate(event.target.value)
-                            }
+                            onChange={(event) => {
+                                setDate(event.target.value);
+                                setError('');
+                            }}
                             className="min-h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm font-semibold text-gray-800 outline-none transition focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-500/10"
                         />
                     </div>
                 </div>
 
                 {error && (
-                    <p className="rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
-                        {error}
-                    </p>
+                    <div className="flex flex-col gap-3 rounded-lg bg-red-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-sm font-medium text-red-600">
+                            {error}
+                        </p>
+
+                        {routes.length === 0 && !isLoading && (
+                            <button
+                                type="button"
+                                onClick={() => void loadRoutes()}
+                                className="shrink-0 text-sm font-bold text-red-700 underline underline-offset-2 hover:text-red-800"
+                            >
+                                Tải lại tuyến
+                            </button>
+                        )}
+                    </div>
                 )}
 
                 <button

@@ -198,9 +198,12 @@ export default function PaymentsPage() {
 
             const confirmedPayment = paymentToConfirm;
 
-            setPaymentToConfirm(null);
+            // Loại giao dịch vừa xác nhận khỏi danh sách đang chờ.
+            setPayments((current) =>
+                current.filter((payment) => payment.id !== confirmedPayment.id),
+            );
 
-            await getPayments();
+            setPaymentToConfirm(null);
 
             setToast({
                 message: `Đã xác nhận thanh toán cho booking ${confirmedPayment.booking.bookingCode}`,
@@ -261,9 +264,12 @@ export default function PaymentsPage() {
 
             const rejectedPayment = paymentToReject;
 
-            setPaymentToReject(null);
+            // Loại giao dịch vừa từ chối khỏi danh sách đang chờ.
+            setPayments((current) =>
+                current.filter((payment) => payment.id !== rejectedPayment.id),
+            );
 
-            await getPayments();
+            setPaymentToReject(null);
 
             setToast({
                 message: `Đã từ chối giao dịch của booking ${rejectedPayment.booking.bookingCode}`,

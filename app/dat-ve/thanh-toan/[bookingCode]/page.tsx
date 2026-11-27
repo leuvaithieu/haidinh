@@ -64,6 +64,7 @@ export default function BookingPaymentPage() {
     const [loadingPayment, setLoadingPayment] = useState(false);
     const [reported, setReported] = useState(false);
     const [error, setError] = useState('');
+    const [currentTime, setCurrentTime] = useState(Date.now());
 
     const isInitialPayment =
         booking !== null && isInitialPaymentAllowed(booking);
@@ -110,8 +111,27 @@ export default function BookingPaymentPage() {
         isInitialPayment &&
         (
             !booking?.holdExpiresAt ||
-            new Date(booking.holdExpiresAt).getTime() <= Date.now()
-        );
+            new Date(booking.holdExpiresAt).getTime() <= currentTime
+        )
+    ;
+
+    const holdRemainingSeconds = booking?.holdExpiresAt
+        ? Math.max(
+            0,
+            Math.ceil(
+                (new Date(booking.holdExpiresAt).getTime() - currentTime) /
+                    1000,
+            ),
+        )
+        : 0;
+
+    const holdCountdown = [
+        Math.floor(holdRemainingSeconds / 3600),
+        Math.floor((holdRemainingSeconds % 3600) / 60),
+        holdRemainingSeconds % 60,
+    ]
+        .map((value) => String(value).padStart(2, '0'))
+        .join(':');
 
     const canReportPayment =
         booking !== null &&
@@ -149,6 +169,19 @@ export default function BookingPaymentPage() {
             isMounted = false;
         };
     }, []);
+
+    // Cập nhật thời gian hiện tại mỗi giây để đếm ngược thời hạn giữ ghế.
+    useEffect(() => {
+        if (!booking?.holdExpiresAt) return;
+
+        setCurrentTime(Date.now());
+
+        const timer = setInterval(() => {
+            setCurrentTime(Date.now());
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [booking?.holdExpiresAt]);
 
     // Tra cứu booking bằng mã đặt vé và số điện thoại người đặt.
     async function handleLookup(event: React.FormEvent<HTMLFormElement>) {
@@ -392,6 +425,11 @@ export default function BookingPaymentPage() {
                                         </p>
                                     </div>
                                 )}
+                                <p className="mt-2 text-3xl font-semibold text-red-600">
+                                    {holdRemainingSeconds > 0
+                                        ? `Thời gian giữ ghế còn lại: ${holdCountdown}`
+                                        : 'Thời gian giữ ghế đã hết'}
+                                </p>
                             </div>
                         </section>
 

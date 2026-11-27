@@ -66,7 +66,7 @@ export type PublicTripSearchResult = {
         name: string;
         vehicleType: string;
         seatCount: number;
-    };
+    } | null;
 };
 
 export type PublicTripSeat = {
